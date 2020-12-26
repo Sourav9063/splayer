@@ -1,63 +1,198 @@
+
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+
+import 'package:splayer/GlobalVar.dart';
+import 'package:splayer/Screens/player.dart';
+
+void main() {
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  // This widget is the root of your application.
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Flutter Demo',
+      theme: ThemeData.dark().copyWith(
+        scaffoldBackgroundColor: Color(0xff060621),
+        accentColor: Color(0xff08f0f0),
+      ),
+      home: LocalFile(),
+    );
+  }
+}
+
+class LocalFile extends StatefulWidget {
+  const LocalFile({Key key}) : super(key: key);
+
+  @override
+  _LocalFileState createState() => _LocalFileState();
+}
+
+class _LocalFileState extends State<LocalFile> {
+  List videoList;
+  @override
+  void initState() {
+    super.initState();
+    
+    Directory dir = Directory('/storage/emulated/0/');
+
+    videoList = dir
+        .listSync(recursive: true, followLinks: false)
+        .map((item) => item.path)
+        .where((item) =>
+            item.endsWith(".mp4") ||
+            item.endsWith(".avi") ||
+            item.endsWith(".webm"))
+        .toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    mediaQuery = MediaQuery.of(context);
+    scrnheight = mediaQuery.size.height;
+    scrnwidth = mediaQuery.size.width;
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Splayer"),
+        actions: [
+          IconButton(
+              icon: Icon(Icons.link),
+              onPressed: () {
+                Navigator.push(
+                    context, MaterialPageRoute(builder: (_) => LinkPage()));
+              })
+        ],
+      ),
+      body: SafeArea(
+          child: ListView.builder(
+        itemCount: videoList.length,
+        itemBuilder: (context, index) {
+          videoList.sort();
+          return InkWell(
+            onTap: () {
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        VideoPlayerScreen(link: videoList[index]),
+                  ));
+            },
+            child: Container(
+              margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              color: Colors.blue,
+              child: Text(videoList[index]
+                  .replaceRange(0, videoList[index].lastIndexOf('/') + 1, '')),
+            ),
+          );
+        },
+      )),
+    );
+  }
+}
+
+class LinkPage extends StatelessWidget {
+  const LinkPage({Key key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    mediaQuery = MediaQuery.of(context);
+    scrnheight = mediaQuery.size.height;
+    scrnwidth = mediaQuery.size.width;
+
+    String link = "Can't be null";
+    TextEditingController controller;
+    return Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            TextField(
+              controller: controller,
+              onChanged: (value) {
+                link = value;
+              },
+              decoration: InputDecoration(
+                hintText: "Paste link",
+                labelText: "Video Link",
+              ),
+            ),
+            RaisedButton(
+              onPressed: link == null
+                  ? null
+                  : () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => VideoPlayerScreen(link: link),
+                          ));
+                    },
+              child: Text("PLAY"),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// import 'package:flutter/cupertino.dart';
 // import 'package:flutter/material.dart';
-// import 'package:splayer/GlobalVar.dart';
-// import 'package:splayer/Screens/player.dart';
+// import 'package:video_player/video_player.dart';
 
 // void main() {
-//   runApp(MyApp());
+//   runApp(
+//     MaterialApp(
+//       home: MyApp(),
+//     ),
+//   );
 // }
 
 // class MyApp extends StatelessWidget {
-//   // This widget is the root of your application.
 //   @override
 //   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       title: 'Flutter Demo',
-//       theme: ThemeData.dark().copyWith(
-//         scaffoldBackgroundColor: Color(0xff060621),
-//         accentColor: Color(0xff08f0f0),
-//       ),
-//       home: InitPage(),
-//     );
-//   }
-// }
-
-// class InitPage extends StatelessWidget {
-//   const InitPage({Key key}) : super(key: key);
-
-//   @override
-//   Widget build(BuildContext context) {
-//     mediaQuery = MediaQuery.of(context);
-//     scrnheight = mediaQuery.size.height;
-//     scrnwidth = mediaQuery.size.width;
-
-//     String link = "Can't be null";
-//     return Scaffold(
-//       body: Center(
-//         child: Column(
-//           mainAxisAlignment: MainAxisAlignment.center,
-//           children: [
-//             TextField(
-//               onChanged: (value) {
-//                 link = value;
-//               },
-//               decoration: InputDecoration(
-//                 hintText: "Paste link",
-//                 labelText: "Video Link",
-                
-
-//               ),
-              
-//             ),
-//             RaisedButton(
+//     return DefaultTabController(
+//       length: 3,
+//       child: Scaffold(
+//         key: const ValueKey<String>('home_page'),
+//         appBar: AppBar(
+//           title: const Text('Video player example'),
+//           actions: <Widget>[
+//             IconButton(
+//               key: const ValueKey<String>('push_tab'),
+//               icon: const Icon(Icons.navigation),
 //               onPressed: () {
-//                 Navigator.push(
-//                     context,
-//                     MaterialPageRoute(
-//                       builder: (context) => VideoPlayerScreen(link: link),
-//                     ));
+//                 Navigator.push<_PlayerVideoAndPopPage>(
+//                   context,
+//                   MaterialPageRoute<_PlayerVideoAndPopPage>(
+//                     builder: (BuildContext context) => _PlayerVideoAndPopPage(),
+//                   ),
+//                 );
 //               },
-//               child: Text("PLAY"),
 //             )
+//           ],
+//           bottom: const TabBar(
+//             isScrollable: true,
+//             tabs: <Widget>[
+//               Tab(
+//                 icon: Icon(Icons.cloud),
+//                 text: "Remote",
+//               ),
+//               Tab(icon: Icon(Icons.insert_drive_file), text: "Asset"),
+//               Tab(icon: Icon(Icons.list), text: "List example"),
+//             ],
+//           ),
+//         ),
+//         body: TabBarView(
+//           children: <Widget>[
+//             _BumbleBeeRemoteVideo(),
+//             _ButterFlyAssetVideo(),
+//             _ButterFlyAssetVideoInList(),
 //           ],
 //         ),
 //       ),
@@ -65,393 +200,333 @@
 //   }
 // }
 
+// class _ButterFlyAssetVideoInList extends StatelessWidget {
+//   @override
+//   Widget build(BuildContext context) {
+//     return ListView(
+//       children: <Widget>[
+//         _ExampleCard(title: "Item a"),
+//         _ExampleCard(title: "Item b"),
+//         _ExampleCard(title: "Item c"),
+//         _ExampleCard(title: "Item d"),
+//         _ExampleCard(title: "Item e"),
+//         _ExampleCard(title: "Item f"),
+//         _ExampleCard(title: "Item g"),
+//         Card(
+//             child: Column(children: <Widget>[
+//           Column(
+//             children: <Widget>[
+//               const ListTile(
+//                 leading: Icon(Icons.cake),
+//                 title: Text("Video video"),
+//               ),
+//               Stack(
+//                   alignment: FractionalOffset.bottomRight +
+//                       const FractionalOffset(-0.1, -0.1),
+//                   children: <Widget>[
+//                     _ButterFlyAssetVideo(),
+//                     Image.asset('assets/flutter-mark-square-64.png'),
+//                   ]),
+//             ],
+//           ),
+//         ])),
+//         _ExampleCard(title: "Item h"),
+//         _ExampleCard(title: "Item i"),
+//         _ExampleCard(title: "Item j"),
+//         _ExampleCard(title: "Item k"),
+//         _ExampleCard(title: "Item l"),
+//       ],
+//     );
+//   }
+// }
 
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:video_player/video_player.dart';
+// /// A filler card to show the video in a list of scrolling contents.
+// class _ExampleCard extends StatelessWidget {
+//   const _ExampleCard({Key key, this.title}) : super(key: key);
 
-void main() {
-  runApp(
-    MaterialApp(
-      home: MyApp(),
-    ),
-  );
-}
+//   final String title;
 
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 3,
-      child: Scaffold(
-        key: const ValueKey<String>('home_page'),
-        appBar: AppBar(
-          title: const Text('Video player example'),
-          actions: <Widget>[
-            IconButton(
-              key: const ValueKey<String>('push_tab'),
-              icon: const Icon(Icons.navigation),
-              onPressed: () {
-                Navigator.push<_PlayerVideoAndPopPage>(
-                  context,
-                  MaterialPageRoute<_PlayerVideoAndPopPage>(
-                    builder: (BuildContext context) => _PlayerVideoAndPopPage(),
-                  ),
-                );
-              },
-            )
-          ],
-          bottom: const TabBar(
-            isScrollable: true,
-            tabs: <Widget>[
-              Tab(
-                icon: Icon(Icons.cloud),
-                text: "Remote",
-              ),
-              Tab(icon: Icon(Icons.insert_drive_file), text: "Asset"),
-              Tab(icon: Icon(Icons.list), text: "List example"),
-            ],
-          ),
-        ),
-        body: TabBarView(
-          children: <Widget>[
-            _BumbleBeeRemoteVideo(),
-            _ButterFlyAssetVideo(),
-            _ButterFlyAssetVideoInList(),
-          ],
-        ),
-      ),
-    );
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     return Card(
+//       child: Column(
+//         mainAxisSize: MainAxisSize.min,
+//         children: <Widget>[
+//           ListTile(
+//             leading: const Icon(Icons.airline_seat_flat_angled),
+//             title: Text(title),
+//           ),
+//           ButtonBar(
+//             children: <Widget>[
+//               FlatButton(
+//                 child: const Text('BUY TICKETS'),
+//                 onPressed: () {
+//                   /* ... */
+//                 },
+//               ),
+//               FlatButton(
+//                 child: const Text('SELL TICKETS'),
+//                 onPressed: () {
+//                   /* ... */
+//                 },
+//               ),
+//             ],
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
 
-class _ButterFlyAssetVideoInList extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      children: <Widget>[
-        _ExampleCard(title: "Item a"),
-        _ExampleCard(title: "Item b"),
-        _ExampleCard(title: "Item c"),
-        _ExampleCard(title: "Item d"),
-        _ExampleCard(title: "Item e"),
-        _ExampleCard(title: "Item f"),
-        _ExampleCard(title: "Item g"),
-        Card(
-            child: Column(children: <Widget>[
-          Column(
-            children: <Widget>[
-              const ListTile(
-                leading: Icon(Icons.cake),
-                title: Text("Video video"),
-              ),
-              Stack(
-                  alignment: FractionalOffset.bottomRight +
-                      const FractionalOffset(-0.1, -0.1),
-                  children: <Widget>[
-                    _ButterFlyAssetVideo(),
-                    Image.asset('assets/flutter-mark-square-64.png'),
-                  ]),
-            ],
-          ),
-        ])),
-        _ExampleCard(title: "Item h"),
-        _ExampleCard(title: "Item i"),
-        _ExampleCard(title: "Item j"),
-        _ExampleCard(title: "Item k"),
-        _ExampleCard(title: "Item l"),
-      ],
-    );
-  }
-}
+// class _ButterFlyAssetVideo extends StatefulWidget {
+//   @override
+//   _ButterFlyAssetVideoState createState() => _ButterFlyAssetVideoState();
+// }
 
-/// A filler card to show the video in a list of scrolling contents.
-class _ExampleCard extends StatelessWidget {
-  const _ExampleCard({Key key, this.title}) : super(key: key);
+// class _ButterFlyAssetVideoState extends State<_ButterFlyAssetVideo> {
+//   VideoPlayerController _controller;
 
-  final String title;
+//   @override
+//   void initState() {
+//     super.initState();
+//     _controller = VideoPlayerController.asset('assets/Butterfly-209.mp4');
 
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          ListTile(
-            leading: const Icon(Icons.airline_seat_flat_angled),
-            title: Text(title),
-          ),
-          ButtonBar(
-            children: <Widget>[
-              FlatButton(
-                child: const Text('BUY TICKETS'),
-                onPressed: () {
-                  /* ... */
-                },
-              ),
-              FlatButton(
-                child: const Text('SELL TICKETS'),
-                onPressed: () {
-                  /* ... */
-                },
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
+//     _controller.addListener(() {
+//       setState(() {});
+//     });
+//     _controller.setLooping(true);
+//     _controller.initialize().then((_) => setState(() {}));
+//     _controller.play();
+//   }
 
-class _ButterFlyAssetVideo extends StatefulWidget {
-  @override
-  _ButterFlyAssetVideoState createState() => _ButterFlyAssetVideoState();
-}
+//   @override
+//   void dispose() {
+//     _controller.dispose();
+//     super.dispose();
+//   }
 
-class _ButterFlyAssetVideoState extends State<_ButterFlyAssetVideo> {
-  VideoPlayerController _controller;
+//   @override
+//   Widget build(BuildContext context) {
+//     return SingleChildScrollView(
+//       child: Column(
+//         children: <Widget>[
+//           Container(
+//             padding: const EdgeInsets.only(top: 20.0),
+//           ),
+//           const Text('With assets mp4'),
+//           Container(
+//             padding: const EdgeInsets.all(20),
+//             child: AspectRatio(
+//               aspectRatio: _controller.value.aspectRatio,
+//               child: Stack(
+//                 alignment: Alignment.bottomCenter,
+//                 children: <Widget>[
+//                   VideoPlayer(_controller),
+//                   _ControlsOverlay(controller: _controller),
+//                   VideoProgressIndicator(_controller, allowScrubbing: true),
+//                 ],
+//               ),
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
 
-  @override
-  void initState() {
-    super.initState();
-    _controller = VideoPlayerController.asset('assets/Butterfly-209.mp4');
+// class _BumbleBeeRemoteVideo extends StatefulWidget {
+//   @override
+//   _BumbleBeeRemoteVideoState createState() => _BumbleBeeRemoteVideoState();
+// }
 
-    _controller.addListener(() {
-      setState(() {});
-    });
-    _controller.setLooping(true);
-    _controller.initialize().then((_) => setState(() {}));
-    _controller.play();
-  }
+// class _BumbleBeeRemoteVideoState extends State<_BumbleBeeRemoteVideo> {
+//   VideoPlayerController _controller;
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+//   Future<ClosedCaptionFile> _loadCaptions() async {
+//     final String fileContents = await DefaultAssetBundle.of(context)
+//         .loadString('assets/bumble_bee_captions.srt');
+//     return SubRipCaptionFile(fileContents);
+//   }
 
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        children: <Widget>[
-          Container(
-            padding: const EdgeInsets.only(top: 20.0),
-          ),
-          const Text('With assets mp4'),
-          Container(
-            padding: const EdgeInsets.all(20),
-            child: AspectRatio(
-              aspectRatio: _controller.value.aspectRatio,
-              child: Stack(
-                alignment: Alignment.bottomCenter,
-                children: <Widget>[
-                  VideoPlayer(_controller),
-                  _ControlsOverlay(controller: _controller),
-                  VideoProgressIndicator(_controller, allowScrubbing: true),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+//   @override
+//   void initState() {
+//     super.initState();
+//     _controller = VideoPlayerController.network(
+//       'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4',
+//       closedCaptionFile: _loadCaptions(),
+//       videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
+//     );
 
-class _BumbleBeeRemoteVideo extends StatefulWidget {
-  @override
-  _BumbleBeeRemoteVideoState createState() => _BumbleBeeRemoteVideoState();
-}
+//     _controller.addListener(() {
+//       setState(() {});
+//     });
+//     _controller.setLooping(true);
+//     _controller.initialize();
+//   }
 
-class _BumbleBeeRemoteVideoState extends State<_BumbleBeeRemoteVideo> {
-  VideoPlayerController _controller;
+//   @override
+//   void dispose() {
+//     _controller.dispose();
+//     super.dispose();
+//   }
 
-  Future<ClosedCaptionFile> _loadCaptions() async {
-    final String fileContents = await DefaultAssetBundle.of(context)
-        .loadString('assets/bumble_bee_captions.srt');
-    return SubRipCaptionFile(fileContents);
-  }
+//   @override
+//   Widget build(BuildContext context) {
+//     return SingleChildScrollView(
+//       child: Column(
+//         children: <Widget>[
+//           Container(padding: const EdgeInsets.only(top: 20.0)),
+//           const Text('With remote mp4'),
+//           Container(
+//             padding: const EdgeInsets.all(20),
+//             child: AspectRatio(
+//               aspectRatio: _controller.value.aspectRatio,
+//               child: Stack(
+//                 alignment: Alignment.bottomCenter,
+//                 children: <Widget>[
+//                   VideoPlayer(_controller),
+//                   ClosedCaption(text: _controller.value.caption.text),
+//                   _ControlsOverlay(controller: _controller),
+//                   VideoProgressIndicator(_controller, allowScrubbing: true),
+//                 ],
+//               ),
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
 
-  @override
-  void initState() {
-    super.initState();
-    _controller = VideoPlayerController.network(
-      'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4',
-      closedCaptionFile: _loadCaptions(),
-      videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
-    );
+// class _ControlsOverlay extends StatelessWidget {
+//   const _ControlsOverlay({Key key, this.controller}) : super(key: key);
 
-    _controller.addListener(() {
-      setState(() {});
-    });
-    _controller.setLooping(true);
-    _controller.initialize();
-  }
+//   static const _examplePlaybackRates = [
+//     0.25,
+//     0.5,
+//     1.0,
+//     1.5,
+//     2.0,
+//     3.0,
+//     5.0,
+//     10.0,
+//   ];
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+//   final VideoPlayerController controller;
 
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        children: <Widget>[
-          Container(padding: const EdgeInsets.only(top: 20.0)),
-          const Text('With remote mp4'),
-          Container(
-            padding: const EdgeInsets.all(20),
-            child: AspectRatio(
-              aspectRatio: _controller.value.aspectRatio,
-              child: Stack(
-                alignment: Alignment.bottomCenter,
-                children: <Widget>[
-                  VideoPlayer(_controller),
-                  ClosedCaption(text: _controller.value.caption.text),
-                  _ControlsOverlay(controller: _controller),
-                  VideoProgressIndicator(_controller, allowScrubbing: true),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     return Stack(
+//       children: <Widget>[
+//         AnimatedSwitcher(
+//           duration: Duration(milliseconds: 50),
+//           reverseDuration: Duration(milliseconds: 200),
+//           child: controller.value.isPlaying
+//               ? SizedBox.shrink()
+//               : Container(
+//                   color: Colors.black26,
+//                   child: Center(
+//                     child: Icon(
+//                       Icons.play_arrow,
+//                       color: Colors.white,
+//                       size: 100.0,
+//                     ),
+//                   ),
+//                 ),
+//         ),
+//         GestureDetector(
+//           onTap: () {
+//             controller.value.isPlaying ? controller.pause() : controller.play();
+//           },
+//         ),
+//         Align(
+//           alignment: Alignment.topRight,
+//           child: PopupMenuButton<double>(
+//             initialValue: controller.value.playbackSpeed,
+//             tooltip: 'Playback speed',
+//             onSelected: (speed) {
+//               controller.setPlaybackSpeed(speed);
+//             },
+//             itemBuilder: (context) {
+//               return [
+//                 for (final speed in _examplePlaybackRates)
+//                   PopupMenuItem(
+//                     value: speed,
+//                     child: Text('${speed}x'),
+//                   )
+//               ];
+//             },
+//             child: Padding(
+//               padding: const EdgeInsets.symmetric(
+//                 // Using less vertical padding as the text is also longer
+//                 // horizontally, so it feels like it would need more spacing
+//                 // horizontally (matching the aspect ratio of the video).
+//                 vertical: 12,
+//                 horizontal: 16,
+//               ),
+//               child: Text('${controller.value.playbackSpeed}x'),
+//             ),
+//           ),
+//         ),
+//       ],
+//     );
+//   }
+// }
 
-class _ControlsOverlay extends StatelessWidget {
-  const _ControlsOverlay({Key key, this.controller}) : super(key: key);
+// class _PlayerVideoAndPopPage extends StatefulWidget {
+//   @override
+//   _PlayerVideoAndPopPageState createState() => _PlayerVideoAndPopPageState();
+// }
 
-  static const _examplePlaybackRates = [
-    0.25,
-    0.5,
-    1.0,
-    1.5,
-    2.0,
-    3.0,
-    5.0,
-    10.0,
-  ];
+// class _PlayerVideoAndPopPageState extends State<_PlayerVideoAndPopPage> {
+//   VideoPlayerController _videoPlayerController;
+//   bool startedPlaying = false;
 
-  final VideoPlayerController controller;
+//   @override
+//   void initState() {
+//     super.initState();
 
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: <Widget>[
-        AnimatedSwitcher(
-          duration: Duration(milliseconds: 50),
-          reverseDuration: Duration(milliseconds: 200),
-          child: controller.value.isPlaying
-              ? SizedBox.shrink()
-              : Container(
-                  color: Colors.black26,
-                  child: Center(
-                    child: Icon(
-                      Icons.play_arrow,
-                      color: Colors.white,
-                      size: 100.0,
-                    ),
-                  ),
-                ),
-        ),
-        GestureDetector(
-          onTap: () {
-            controller.value.isPlaying ? controller.pause() : controller.play();
-          },
-        ),
-        Align(
-          alignment: Alignment.topRight,
-          child: PopupMenuButton<double>(
-            initialValue: controller.value.playbackSpeed,
-            tooltip: 'Playback speed',
-            onSelected: (speed) {
-              controller.setPlaybackSpeed(speed);
-            },
-            itemBuilder: (context) {
-              return [
-                for (final speed in _examplePlaybackRates)
-                  PopupMenuItem(
-                    value: speed,
-                    child: Text('${speed}x'),
-                  )
-              ];
-            },
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                // Using less vertical padding as the text is also longer
-                // horizontally, so it feels like it would need more spacing
-                // horizontally (matching the aspect ratio of the video).
-                vertical: 12,
-                horizontal: 16,
-              ),
-              child: Text('${controller.value.playbackSpeed}x'),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
+//     _videoPlayerController =
+//         VideoPlayerController.asset('assets/Butterfly-209.mp4');
+//     _videoPlayerController.addListener(() {
+//       if (startedPlaying && !_videoPlayerController.value.isPlaying) {
+//         Navigator.pop(context);
+//       }
+//     });
+//   }
 
-class _PlayerVideoAndPopPage extends StatefulWidget {
-  @override
-  _PlayerVideoAndPopPageState createState() => _PlayerVideoAndPopPageState();
-}
+//   @override
+//   void dispose() {
+//     _videoPlayerController.dispose();
+//     super.dispose();
+//   }
 
-class _PlayerVideoAndPopPageState extends State<_PlayerVideoAndPopPage> {
-  VideoPlayerController _videoPlayerController;
-  bool startedPlaying = false;
+//   Future<bool> started() async {
+//     await _videoPlayerController.initialize();
+//     await _videoPlayerController.play();
+//     startedPlaying = true;
+//     return true;
+//   }
 
-  @override
-  void initState() {
-    super.initState();
-
-    _videoPlayerController =
-        VideoPlayerController.asset('assets/Butterfly-209.mp4');
-    _videoPlayerController.addListener(() {
-      if (startedPlaying && !_videoPlayerController.value.isPlaying) {
-        Navigator.pop(context);
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _videoPlayerController.dispose();
-    super.dispose();
-  }
-
-  Future<bool> started() async {
-    await _videoPlayerController.initialize();
-    await _videoPlayerController.play();
-    startedPlaying = true;
-    return true;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      elevation: 0,
-      child: Center(
-        child: FutureBuilder<bool>(
-          future: started(),
-          builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
-            if (snapshot.data == true) {
-              return AspectRatio(
-                aspectRatio: _videoPlayerController.value.aspectRatio,
-                child: VideoPlayer(_videoPlayerController),
-              );
-            } else {
-              return const Text('waiting for video to load');
-            }
-          },
-        ),
-      ),
-    );
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     return Material(
+//       elevation: 0,
+//       child: Center(
+//         child: FutureBuilder<bool>(
+//           future: started(),
+//           builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
+//             if (snapshot.data == true) {
+//               return AspectRatio(
+//                 aspectRatio: _videoPlayerController.value.aspectRatio,
+//                 child: VideoPlayer(_videoPlayerController),
+//               );
+//             } else {
+//               return const Text('waiting for video to load');
+//             }
+//           },
+//         ),
+//       ),
+//     );
+//   }
+// }
