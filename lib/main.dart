@@ -38,7 +38,8 @@ class _LocalFileState extends State<LocalFile> {
   List<String> folderNameList = [];
   bool permission;
 
-  void getList() {
+  Future<void> getList() async {
+    print("GetList called");
     try {
       Directory dir = Directory('/storage/emulated/0/');
 
@@ -58,10 +59,9 @@ class _LocalFileState extends State<LocalFile> {
         // foldername.add(loc.replaceRange(0, loc.lastIndexOf('/') + 1, ''));
         foldername.add(loc);
       }
-      for (var name in foldername) {
-        print(name);
-      }
-      folderNameList = foldername.toList();
+      setState(() {
+        folderNameList = foldername.toList();
+      });
     } catch (e) {
       permission = false;
     }
@@ -79,6 +79,7 @@ class _LocalFileState extends State<LocalFile> {
     mediaQuery = MediaQuery.of(context);
     scrnheight = mediaQuery.size.height;
     scrnwidth = mediaQuery.size.width;
+    print('Update');
     return Scaffold(
       appBar: AppBar(
         title: Text("Splayer"),
@@ -93,24 +94,29 @@ class _LocalFileState extends State<LocalFile> {
       ),
       body: SafeArea(
           child: permission
-              ? ListView.builder(
-                  itemCount: folderNameList.length,
-                  itemBuilder: (context, index) {
-                    return ListTile(
-                      onTap: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => FoldersVideos(
-                                  locationString: folderNameList[index]),
-                            ));
-                      },
-                      title: Text(folderNameList[index].replaceRange(
-                          0, folderNameList[index].lastIndexOf('/') + 1, '')),
-                      leading: Icon(Icons.folder),
-                      // subtitle: Text(videoList[index]),
-                    );
+              ? RefreshIndicator(
+                  onRefresh: () {
+                    return getList();
                   },
+                  child: ListView.builder(
+                    itemCount: folderNameList.length,
+                    itemBuilder: (context, index) {
+                      return ListTile(
+                        onTap: () {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => FoldersVideos(
+                                    locationString: folderNameList[index]),
+                              ));
+                        },
+                        title: Text(folderNameList[index].replaceRange(
+                            0, folderNameList[index].lastIndexOf('/') + 1, '')),
+                        leading: Icon(Icons.folder),
+                        // subtitle: Text(videoList[index]),
+                      );
+                    },
+                  ),
                 )
               : Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -144,10 +150,6 @@ class LinkPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    mediaQuery = MediaQuery.of(context);
-    scrnheight = mediaQuery.size.height;
-    scrnwidth = mediaQuery.size.width;
-
     String link = "Can't be null";
     TextEditingController controller;
     return Scaffold(
@@ -160,10 +162,12 @@ class LinkPage extends StatelessWidget {
               onChanged: (value) {
                 link = value;
               },
+              minLines: 2,
+              maxLines: 6,
               decoration: InputDecoration(
-                hintText: "Paste link",
-                labelText: "Video Link",
-              ),
+                  hintText: "Paste link",
+                  labelText: "Video Link",
+                  prefixIcon: Icon(Icons.link)),
             ),
             RaisedButton(
               onPressed: link == null
