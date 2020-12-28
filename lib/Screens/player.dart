@@ -19,6 +19,8 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   Orientation or;
   double videoRario = 16 / 9;
   bool show = false;
+  ValueNotifier<Duration> passedTime = ValueNotifier(Duration(seconds: 0));
+
   void scrnSetUp(double ratio) async {
     await SystemChrome.setEnabledSystemUIOverlays([SystemUiOverlay.bottom]);
     if (ratio >= 1) {
@@ -117,15 +119,23 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                       alignment: Alignment(1, .9),
                       child: VideoProgressIndicator(
                         videoPlayerController,
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 80, vertical: 20),
+                        padding: EdgeInsets.symmetric(vertical: 20),
                         allowScrubbing: true,
                       )),
                 ),
               ),
               Row(
                 children: [
-                 
+                  // Text(videoPlayerController.value.position.)
+                  ValueListenableBuilder(
+                    valueListenable:
+                        ValueNotifier(videoPlayerController.value.position),
+                    builder:
+                        (BuildContext context, dynamic value, Widget child) {
+                      print(value.toString());
+                      return Container();
+                    },
+                  ),
                 ],
               )
             ],

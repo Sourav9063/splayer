@@ -1,7 +1,7 @@
-
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import 'package:splayer/GlobalVar.dart';
 import 'package:splayer/Screens/player.dart';
@@ -16,11 +16,11 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
+      title: 'Splayer',
       theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: Color(0xff060621),
-        accentColor: Color(0xff08f0f0),
-      ),
+          scaffoldBackgroundColor: Color(0xff060621),
+          accentColor: Color(0xff08f0f0),
+          appBarTheme: AppBarTheme().copyWith(color: Colors.pinkAccent[400])),
       home: LocalFile(),
     );
   }
@@ -34,21 +34,44 @@ class LocalFile extends StatefulWidget {
 }
 
 class _LocalFileState extends State<LocalFile> {
-  List videoList;
+  List videoList = [];
+  List<String> folderNameList = [];
+  bool permission;
+
+  void getList() {
+    try {
+      Directory dir = Directory('/storage/emulated/0/');
+
+      videoList = dir
+          .listSync(recursive: true, followLinks: false)
+          .map((item) => item.path)
+          .where((item) =>
+              item.endsWith(".mp4") ||
+              item.endsWith(".avi") ||
+              item.endsWith(".webm"))
+          .toList();
+      permission = true;
+      videoList.sort();
+      Set<String> foldername = {};
+      for (String loc in videoList) {
+        loc = loc.replaceRange(loc.lastIndexOf('/'), loc.length, '');
+        // foldername.add(loc.replaceRange(0, loc.lastIndexOf('/') + 1, ''));
+        foldername.add(loc);
+      }
+      for (var name in foldername) {
+        print(name);
+      }
+      folderNameList = foldername.toList();
+    } catch (e) {
+      permission = false;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-    
-    Directory dir = Directory('/storage/emulated/0/');
 
-    videoList = dir
-        .listSync(recursive: true, followLinks: false)
-        .map((item) => item.path)
-        .where((item) =>
-            item.endsWith(".mp4") ||
-            item.endsWith(".avi") ||
-            item.endsWith(".webm"))
-        .toList();
+    getList();
   }
 
   @override
@@ -69,29 +92,49 @@ class _LocalFileState extends State<LocalFile> {
         ],
       ),
       body: SafeArea(
-          child: ListView.builder(
-        itemCount: videoList.length,
-        itemBuilder: (context, index) {
-          videoList.sort();
-          return InkWell(
-            onTap: () {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        VideoPlayerScreen(link: videoList[index]),
-                  ));
-            },
-            child: Container(
-              margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              color: Colors.blue,
-              child: Text(videoList[index]
-                  .replaceRange(0, videoList[index].lastIndexOf('/') + 1, '')),
-            ),
-          );
-        },
-      )),
+          child: permission
+              ? ListView.builder(
+                  itemCount: folderNameList.length,
+                  itemBuilder: (context, index) {
+                    return ListTile(
+                      onTap: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => FoldersVideos(
+                                  locationString: folderNameList[index]),
+                            ));
+                      },
+                      title: Text(folderNameList[index].replaceRange(
+                          0, folderNameList[index].lastIndexOf('/') + 1, '')),
+                      leading: Icon(Icons.folder),
+                      // subtitle: Text(videoList[index]),
+                    );
+                  },
+                )
+              : Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Center(child: Text("Storage permission needed")),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: RaisedButton(
+                        onPressed: () async {
+                          await Permission.storage.request();
+
+                          if (await Permission.storage.isGranted) {
+                            getList();
+                            setState(() {
+                              permission = true;
+                            });
+                          }
+                        },
+                        child: Text("ALLOW"),
+                      ),
+                    ),
+                  ],
+                )),
     );
   }
 }
@@ -136,6 +179,50 @@ class LinkPage extends StatelessWidget {
             )
           ],
         ),
+      ),
+    );
+  }
+}
+
+class FoldersVideos extends StatelessWidget {
+  const FoldersVideos({Key key, this.locationString}) : super(key: key);
+  final String locationString;
+
+  @override
+  Widget build(BuildContext context) {
+    Directory dir = Directory(locationString + '/');
+
+    List<String> videoList = dir
+        .listSync(recursive: false, followLinks: false)
+        .map((item) => item.path)
+        .where((item) =>
+            item.endsWith(".mp4") ||
+            item.endsWith(".avi") ||
+            item.endsWith(".webm"))
+        .toList();
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(locationString.replaceRange(
+            0, locationString.lastIndexOf('/') + 1, '')),
+      ),
+      body: ListView.builder(
+        itemCount: videoList.length,
+        itemBuilder: (context, index) {
+          return ListTile(
+            onTap: () {
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        VideoPlayerScreen(link: videoList[index]),
+                  ));
+            },
+            title: Text(videoList[index]
+                .replaceRange(0, videoList[index].lastIndexOf('/') + 1, '')),
+            leading: Icon(Icons.video_library),
+            // subtitle: Text(videoList[index]),
+          );
+        },
       ),
     );
   }
