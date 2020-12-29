@@ -16,8 +16,9 @@ class VideoPlayerScreen extends StatefulWidget {
 
 class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   VideoPlayerController videoPlayerController;
-  double seekPos = 0.0;
-  double dis;
+  double seekPosFirst = 0.0;
+  double seekDis = 0.0;
+  bool showSeek = false;
   Orientation or;
   double videoRario = 16 / 9;
   bool show = false;
@@ -49,7 +50,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     }
     videoPlayerController.initialize().then((_) {
       videoPlayerController.play();
-
+      videoPlayerController.addListener(() {});
       videoRario = videoPlayerController.value.aspectRatio;
       scrnSetUp(videoPlayerController.value.aspectRatio);
 
@@ -91,37 +92,26 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                           });
                         },
                         onHorizontalDragStart: (details) {
-                          seekPos = details.globalPosition.dy;
+                          seekPosFirst = details.globalPosition.dx;
                           setState(() {
-                            show = true;
+                            showSeek = true;
                           });
                         },
                         onHorizontalDragEnd: (details) {
+                          seekPosFirst = 0.0;
+                          videoPlayerController.seekTo(
+                              videoPlayerController.value.position +
+                                  Duration(seconds: (seekDis * .25).toInt()));
                           setState(() {
-                            show = false;
+                            showSeek = false;
                           });
+                          seekDis = 0.0;
                         },
                         onHorizontalDragUpdate: (details) {
-                          dis = details.globalPosition.dy - seekPos;
-                          // // print(details.delta.distance.toString() + "pixel");
-                          // int sec = dis.toInt();
-                          // // print(details.localPosition.dy);
-                          // print(dis.toString() + 'Seek');
-
-                          // videoPlayerController.seekTo(
-                          //     videoPlayerController.value.position +
-                          //         Duration(seconds: sec));
-                          // // setState(() {});
-                          print(details.delta.dx);
-                          if (details.delta.dx < 0) {
-                            videoPlayerController.seekTo(
-                                videoPlayerController.value.position -
-                                    Duration(seconds: 1));
-                          } else if (details.delta.dx > 0) {
-                            videoPlayerController.seekTo(
-                                videoPlayerController.value.position +
-                                    Duration(seconds: 1));
-                          }
+                          setState(() {
+                            seekDis = details.globalPosition.dx - seekPosFirst;
+                          });
+                          print(details.globalPosition.dx);
                         },
                         onScaleUpdate: (details) {
                           // print(details.);
@@ -238,14 +228,43 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                                       textScaleFactor: 1.05)
                                 ],
                               ),
-                            )
+                            ),
                           ],
                         ),
                       ),
                     ),
+                    Visibility(
+                      visible: showSeek,
+                      child: Center(
+                          child: Text(
+                        (seekDis * .25).toInt().toString(),
+                        textScaleFactor: 2.5,
+                      )),
+                    )
                   ],
                 )
               : CircularProgressIndicator(),
         ));
   }
 }
+
+// // print(details.delta.distance.toString() + "pixel");
+// int sec = dis.toInt();
+// // print(details.localPosition.dy);
+// print(dis.toString() + 'Seek');
+
+// videoPlayerController.seekTo(
+//     videoPlayerController.value.position +
+//         Duration(seconds: sec));
+// // setState(() {});
+
+// print(details.delta.dx);
+// if (details.delta.dx < 0) {
+//   videoPlayerController.seekTo(
+//       videoPlayerController.value.position -
+//           Duration(seconds: 1));
+// } else if (details.delta.dx > 0) {
+//   videoPlayerController.seekTo(
+//       videoPlayerController.value.position +
+//           Duration(seconds: 1));
+// }
