@@ -26,6 +26,7 @@ dependencies:
   cupertino_icons: ^1.0.0
   permission_handler: ^5.0.1+1
   video_player: ^1.0.1
+  video_thumbnail: ^0.2.5+1
 
 dev_dependencies:
   flutter_test:

@@ -35,6 +35,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     }
   }
 
+  File file;
   //  = Orientation.landscape;
   @override
   void initState() {
@@ -43,7 +44,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     if (widget.link.startsWith("http"))
       videoPlayerController = VideoPlayerController.network(widget.link);
     else {
-      var file = File(widget.link);
+      file = File(widget.link);
       videoPlayerController = VideoPlayerController.file(file);
     }
     videoPlayerController.initialize().then((_) {
