@@ -20,13 +20,13 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   double seekDis = 0.0;
   bool showSeek = false;
   Orientation or;
-  double videoRario = 16 / 9;
+  double videoRatio = 16 / 9;
   bool show = false;
   ValueNotifier<Duration> passedTime = ValueNotifier(Duration(seconds: 0));
   double vSpeed = 1;
 
   void scrnSetUp(double ratio) async {
-    await SystemChrome.setEnabledSystemUIOverlays([SystemUiOverlay.bottom]);
+    await SystemChrome.setEnabledSystemUIOverlays([]);
     if (ratio >= 1) {
       await SystemChrome.setPreferredOrientations(
           [DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight]);
@@ -51,7 +51,8 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     videoPlayerController.initialize().then((_) {
       videoPlayerController.play();
       videoPlayerController.addListener(() {});
-      videoRario = videoPlayerController.value.aspectRatio;
+      videoRatio = videoPlayerController.value.aspectRatio;
+      // videoPlayerController.
       scrnSetUp(videoPlayerController.value.aspectRatio);
 
       setState(() {});
@@ -60,7 +61,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
   @override
   void dispose() {
-    SystemChrome.setEnabledSystemUIOverlays([SystemUiOverlay.top]);
+    SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
     videoPlayerController.dispose();
     SystemChrome.setPreferredOrientations(
         [DeviceOrientation.portraitDown, DeviceOrientation.portraitUp]);
@@ -70,181 +71,239 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   @override
   Widget build(BuildContext context) {
     print("update");
+    SystemChrome.setEnabledSystemUIOverlays([]);
     return Scaffold(
         backgroundColor: Colors.black,
-        body: Center(
-          child: videoPlayerController.value.initialized
-              ? Stack(
-                  children: [
-                    Center(
-                      child: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            show = !show;
-                          });
-                        },
-                        onDoubleTap: () {
-                          setState(() {
-                            videoPlayerController.value.isPlaying
-                                ? videoPlayerController.pause()
-                                : videoPlayerController.play();
-                            show = !videoPlayerController.value.isPlaying;
-                          });
-                        },
-                        onHorizontalDragStart: (details) {
-                          seekPosFirst = details.globalPosition.dx;
-                          setState(() {
-                            showSeek = true;
-                          });
-                        },
-                        onHorizontalDragEnd: (details) {
-                          seekPosFirst = 0.0;
-                          videoPlayerController.seekTo(
-                              videoPlayerController.value.position +
-                                  Duration(seconds: (seekDis * .25).toInt()));
-                          setState(() {
-                            showSeek = false;
-                          });
-                          seekDis = 0.0;
-                        },
-                        onHorizontalDragUpdate: (details) {
-                          setState(() {
-                            seekDis = details.globalPosition.dx - seekPosFirst;
-                          });
-                          print(details.globalPosition.dx);
-                        },
-                        onScaleUpdate: (details) {
-                          // print(details.);
+        body: videoPlayerController.value.initialized
+            ? Stack(
+                overflow: Overflow.visible,
+                children: [
+                  Center(
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          show = !show;
+                        });
+                      },
+                      onDoubleTap: () {
+                        setState(() {
+                          videoPlayerController.value.isPlaying
+                              ? videoPlayerController.pause()
+                              : videoPlayerController.play();
+                          show = !videoPlayerController.value.isPlaying;
+                        });
+                      },
+                      onHorizontalDragStart: (details) {
+                        seekPosFirst = details.globalPosition.dx;
+                        setState(() {
+                          showSeek = true;
+                        });
+                      },
+                      onHorizontalDragEnd: (details) {
+                        seekPosFirst = 0.0;
+                        videoPlayerController.seekTo(
+                            videoPlayerController.value.position +
+                                Duration(seconds: (seekDis * .25).toInt()));
+                        setState(() {
+                          showSeek = false;
+                        });
+                        seekDis = 0.0;
+                      },
+                      onHorizontalDragUpdate: (details) {
+                        setState(() {
+                          seekDis = details.globalPosition.dx - seekPosFirst;
+                        });
+                        print(details.globalPosition.dx);
+                      },
+                      onScaleUpdate: (details) {
+                        // print(details.);
 
-                          if (details.scale > 1) {
-                            setState(() {
-                              videoRario = (scrnwidth) / (scrnheight);
-                            });
-                          } else if (details.scale < 1) {
-                            setState(() {
-                              videoRario =
-                                  videoPlayerController.value.aspectRatio;
-                            });
-                          }
-                        },
-                        child: AspectRatio(
-                          // aspectRatio: videoPlayerController.value.aspectRatio,
-                          aspectRatio: videoRario,
-                          child: VideoPlayer(
-                            videoPlayerController,
-                          ),
+                        if (details.scale > 1) {
+                          setState(() {
+                            videoRatio = (scrnwidth) / (scrnheight);
+                          });
+                        } else if (details.scale < 1) {
+                          setState(() {
+                            videoRatio =
+                                videoPlayerController.value.aspectRatio;
+                          });
+                        }
+                      },
+                      child: AspectRatio(
+                        // aspectRatio: videoPlayerController.value.aspectRatio,
+                        aspectRatio: videoRatio,
+                        child: VideoPlayer(
+                          videoPlayerController,
                         ),
                       ),
                     ),
-                    AnimatedOpacity(
-                      duration: Duration(milliseconds: 300),
-                      opacity: show ? 1 : 0,
-                      child: Visibility(
-                        visible: show,
-                        child: Stack(
-                          children: [
-                            Positioned(
-                                right: 10,
-                                top: 0,
-                                child: Row(
-                                  children: [
-                                    Text('Speed:  '),
-                                    DropdownButton(
-                                      value: vSpeed,
-                                      dropdownColor: Colors.black38,
-                                      underline: Container(),
-                                      items: [
-                                        DropdownMenuItem(
-                                          child: Text("0.5"),
-                                          value: .5,
-                                        ),
-                                        DropdownMenuItem(
-                                          child: Text("0.75"),
-                                          value: .75,
-                                        ),
-                                        DropdownMenuItem(
-                                          child: Text("1"),
-                                          value: 1.0,
-                                        ),
-                                        DropdownMenuItem(
-                                          child: Text("1.5"),
-                                          value: 1.5,
-                                        ),
-                                      ],
-                                      onChanged: (value) {
-                                        setState(() {
-                                          vSpeed = value;
-                                        });
+                  ),
+                  AnimatedOpacity(
+                    duration: Duration(milliseconds: 300),
+                    opacity: show ? 1 : 0,
+                    child: Visibility(
+                      visible: show,
+                      child: Stack(
+                        children: [
+                          Positioned(
+                              right: 0,
+                              top: 0,
+                              left: 0,
+                              child: Container(
+                                color: Colors.black45,
+                                child: Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(horizontal: 8),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        // fit: BoxFit.fitWidth,
+                                        child: Text(videoPlayerController
+                                            .dataSource
+                                            .replaceRange(
+                                                0,
+                                                videoPlayerController.dataSource
+                                                        .lastIndexOf('/') +
+                                                    1,
+                                                '')),
+                                      ),
+                                      Row(
+                                        children: [
+                                          IconButton(
+                                              icon: Icon(Icons.screen_rotation),
+                                              onPressed: () async {
+                                                if (mediaQuery.orientation ==
+                                                    Orientation.portrait) {
+                                                  await SystemChrome
+                                                      .setPreferredOrientations([
+                                                    DeviceOrientation
+                                                        .landscapeLeft,
+                                                    DeviceOrientation
+                                                        .landscapeRight
+                                                  ]);
+                                                } else {
+                                                  await SystemChrome
+                                                      .setPreferredOrientations([
+                                                    DeviceOrientation
+                                                        .portraitDown,
+                                                    DeviceOrientation.portraitUp
+                                                  ]);
+                                                }
+                                              }),
+                                          Text('Speed:  '),
+                                          DropdownButton(
+                                            value: vSpeed,
+                                            dropdownColor: Colors.black38,
+                                            underline: Container(),
+                                            items: [
+                                              DropdownMenuItem(
+                                                child: Text("0.5"),
+                                                value: .5,
+                                              ),
+                                              DropdownMenuItem(
+                                                child: Text("0.75"),
+                                                value: .75,
+                                              ),
+                                              DropdownMenuItem(
+                                                child: Text("1"),
+                                                value: 1.0,
+                                              ),
+                                              DropdownMenuItem(
+                                                child: Text("1.25"),
+                                                value: 1.25,
+                                              ),
+                                              DropdownMenuItem(
+                                                child: Text("1.5"),
+                                                value: 1.5,
+                                              ),
+                                              DropdownMenuItem(
+                                                child: Text("1.75"),
+                                                value: 1.75,
+                                              ),
+                                              DropdownMenuItem(
+                                                child: Text("2"),
+                                                value: 2,
+                                              ),
+                                            ],
+                                            onChanged: (value) {
+                                              setState(() {
+                                                vSpeed = value;
+                                              });
 
-                                        videoPlayerController
-                                            .setPlaybackSpeed(value);
-                                      },
-                                    ),
-                                  ],
-                                )),
-                            Align(
-                                alignment: Alignment(1, .9),
-                                child: VideoProgressIndicator(
-                                  videoPlayerController,
-                                  padding: EdgeInsets.symmetric(vertical: 20),
-                                  allowScrubbing: true,
-                                )),
-                            Align(
-                              alignment: Alignment(.9, .95),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  // Text(videoPlayerController.value.position.)
-                                  ValueListenableBuilder(
-                                    valueListenable: videoPlayerController,
-                                    builder: (BuildContext context,
-                                        VideoPlayerValue value, Widget child) {
-                                      // print(value.toString());
-                                      return Text(
-                                        value.position.toString().replaceRange(
-                                            value.position
+                                              videoPlayerController
+                                                  .setPlaybackSpeed(value);
+                                            },
+                                          ),
+                                          SizedBox(
+                                            width: 10,
+                                          )
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              )),
+                          Align(
+                              alignment: Alignment(1, .9),
+                              child: VideoProgressIndicator(
+                                videoPlayerController,
+                                padding: EdgeInsets.symmetric(vertical: 20),
+                                allowScrubbing: true,
+                              )),
+                          Align(
+                            alignment: Alignment(.9, .95),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                // Text(videoPlayerController.value.position.)
+                                ValueListenableBuilder(
+                                  valueListenable: videoPlayerController,
+                                  builder: (BuildContext context,
+                                      VideoPlayerValue value, Widget child) {
+                                    // print(value.toString());
+                                    return Text(
+                                      value.position.toString().replaceRange(
+                                          value.position
+                                              .toString()
+                                              .lastIndexOf('.'),
+                                          value.position.toString().length,
+                                          ''),
+                                      textScaleFactor: 1.05,
+                                    );
+                                  },
+                                ),
+                                Text(
+                                    videoPlayerController.value.duration
+                                        .toString()
+                                        .replaceRange(
+                                            videoPlayerController.value.position
                                                 .toString()
                                                 .lastIndexOf('.'),
-                                            value.position.toString().length,
+                                            videoPlayerController.value.position
+                                                .toString()
+                                                .length,
                                             ''),
-                                        textScaleFactor: 1.05,
-                                      );
-                                    },
-                                  ),
-                                  Text(
-                                      videoPlayerController.value.duration
-                                          .toString()
-                                          .replaceRange(
-                                              videoPlayerController
-                                                  .value.position
-                                                  .toString()
-                                                  .lastIndexOf('.'),
-                                              videoPlayerController
-                                                  .value.position
-                                                  .toString()
-                                                  .length,
-                                              ''),
-                                      textScaleFactor: 1.05)
-                                ],
-                              ),
+                                    textScaleFactor: 1.05)
+                              ],
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
-                    Visibility(
-                      visible: showSeek,
-                      child: Center(
-                          child: Text(
-                        (seekDis * .25).toInt().toString(),
-                        textScaleFactor: 2.5,
-                      )),
-                    )
-                  ],
-                )
-              : CircularProgressIndicator(),
-        ));
+                  ),
+                  Visibility(
+                    visible: showSeek,
+                    child: Center(
+                        child: Text(
+                      (seekDis * .25).toInt().toString(),
+                      textScaleFactor: 2.5,
+                    )),
+                  )
+                ],
+              )
+            : Center(child: CircularProgressIndicator()));
   }
 }
 

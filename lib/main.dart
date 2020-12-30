@@ -95,54 +95,53 @@ class _LocalFileState extends State<LocalFile> {
               })
         ],
       ),
-      body: SafeArea(
-          child: permission
-              ? RefreshIndicator(
-                  onRefresh: () {
-                    return getList();
-                  },
-                  child: ListView.builder(
-                    itemCount: folderNameList.length,
-                    itemBuilder: (context, index) {
-                      return ListTile(
-                        onTap: () {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => FoldersVideos(
-                                    locationString: folderNameList[index]),
-                              ));
-                        },
-                        title: Text(folderNameList[index].replaceRange(
-                            0, folderNameList[index].lastIndexOf('/') + 1, '')),
-                        leading: Icon(Icons.folder),
-                      );
+      body: permission
+          ? RefreshIndicator(
+              onRefresh: () {
+                return getList();
+              },
+              child: ListView.builder(
+                itemCount: folderNameList.length,
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    onTap: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => FoldersVideos(
+                                locationString: folderNameList[index]),
+                          ));
                     },
-                  ),
-                )
-              : Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Center(child: Text("Storage permission needed")),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: RaisedButton(
-                        onPressed: () async {
-                          await Permission.storage.request();
+                    title: Text(folderNameList[index].replaceRange(
+                        0, folderNameList[index].lastIndexOf('/') + 1, '')),
+                    leading: Icon(Icons.folder),
+                  );
+                },
+              ),
+            )
+          : Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(child: Text("Storage permission needed")),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: RaisedButton(
+                    onPressed: () async {
+                      await Permission.storage.request();
 
-                          if (await Permission.storage.isGranted) {
-                            getList();
-                            setState(() {
-                              permission = true;
-                            });
-                          }
-                        },
-                        child: Text("ALLOW"),
-                      ),
-                    ),
-                  ],
-                )),
+                      if (await Permission.storage.isGranted) {
+                        getList();
+                        setState(() {
+                          permission = true;
+                        });
+                      }
+                    },
+                    child: Text("ALLOW"),
+                  ),
+                ),
+              ],
+            ),
     );
   }
 }
