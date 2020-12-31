@@ -166,27 +166,28 @@ class VlcPageState extends State<VlcPage> {
                 ),
               ),
               Positioned(
-                  top: 0,
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        show = !show;
-                      });
-                    },
-                    onDoubleTap: () {
-                      playOrPauseVideo();
-                    },
-                    onScaleUpdate: (details) {
-                      if (details.scale > 1) {
-                        print("zoom");
-                        _videoViewController.setVideoAspectRatio(
-                            (scrnheight / scrnwidth).toString());
-                      }
-                    },
-                  )),
+                top: 0,
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      show = !show;
+                    });
+                  },
+                  onDoubleTap: () {
+                    playOrPauseVideo();
+                  },
+                  // onScaleUpdate: (details) {
+                  //   if (details.scale > 1) {
+                  //     print("zoom");
+                  //     _videoViewController.setVideoAspectRatio(
+                  //         (scrnheight / scrnwidth).toString());
+                  //   }
+                  // },
+                ),
+              ),
               AnimatedOpacity(
                 opacity: show ? 1 : 0,
                 duration: Duration(milliseconds: 300),
