@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import 'package:splayer/GlobalVar.dart';
+import 'package:splayer/Screens/GivenVlcpage.dart';
 import 'package:splayer/Screens/player.dart';
+import 'package:splayer/Screens/vlcPlayer.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
 void main() {
@@ -222,6 +224,14 @@ class FoldersVideos extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
                 child: ListTile(
+                    onLongPress: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                VlcPage(link: videoList[index]),
+                          ));
+                    },
                     onTap: () {
                       Navigator.push(
                           context,

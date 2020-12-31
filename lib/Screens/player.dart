@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:splayer/BackEnd/Times.dart';
 import 'package:splayer/GlobalVar.dart';
 
 import 'package:video_player/video_player.dart';
@@ -22,7 +23,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   Orientation or;
   double videoRatio = 16 / 9;
   bool show = false;
-  ValueNotifier<Duration> passedTime = ValueNotifier(Duration(seconds: 0));
+  // ValueNotifier<Duration> passedTime = ValueNotifier(Duration(seconds: 0));
   double vSpeed = 1;
 
   void scrnSetUp(double ratio) async {
@@ -34,6 +35,17 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       await SystemChrome.setPreferredOrientations(
           [DeviceOrientation.portraitDown, DeviceOrientation.portraitUp]);
     }
+  }
+
+  void setResumeOnstart() async {
+    int second = await ResumeTime.getResumeTimeInSecond(widget.link);
+
+    if (second != null) videoPlayerController.seekTo(Duration(seconds: second));
+  }
+
+  void setResumeOnend() async {
+    Duration second = await videoPlayerController.position;
+    ResumeTime.setResumeTime(widget.link, second.inSeconds);
   }
 
   File file;
@@ -50,10 +62,12 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     }
     videoPlayerController.initialize().then((_) {
       videoPlayerController.play();
+
       videoPlayerController.addListener(() {});
       videoRatio = videoPlayerController.value.aspectRatio;
       // videoPlayerController.
       scrnSetUp(videoPlayerController.value.aspectRatio);
+      setResumeOnstart();
 
       setState(() {});
     });
@@ -61,6 +75,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
   @override
   void dispose() {
+    setResumeOnend();
     SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
     videoPlayerController.dispose();
     SystemChrome.setPreferredOrientations(
@@ -80,7 +95,10 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                 children: [
                   Center(
                     child: GestureDetector(
-                      onTap: () {
+                      onTap: () async {
+                        print(await ResumeTime.getResumeTimeInSecond(
+                            widget.link));
+                        // print(videoPlayerController.value.)
                         setState(() {
                           show = !show;
                         });
@@ -132,8 +150,17 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                       child: AspectRatio(
                         // aspectRatio: videoPlayerController.value.aspectRatio,
                         aspectRatio: videoRatio,
-                        child: VideoPlayer(
-                          videoPlayerController,
+                        child: Stack(
+                          children: [
+                            VideoPlayer(
+                              videoPlayerController,
+                            ),
+                            Center(
+                              child: ClosedCaption(
+                                text: videoPlayerController.value.caption.text,
+                              ),
+                            )
+                          ],
                         ),
                       ),
                     ),
