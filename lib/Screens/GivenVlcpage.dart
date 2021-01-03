@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_vlc_player/flutter_vlc_player.dart';
 import 'package:splayer/BackEnd/Times.dart';
+import 'package:splayer/Components/blurredDialogue.dart';
 import 'package:splayer/GlobalVar.dart';
 
 class VlcPage extends StatefulWidget {
@@ -38,6 +39,12 @@ class VlcPageState extends State<VlcPage> {
   int numberOfAudioTracks = 0;
   bool isBuffering = true;
   bool getCastDeviceBtnEnabled = false;
+
+  double seekDis = 0;
+
+  double seekPosFirst = 0;
+
+  bool showSeek = false;
 
   void scrnSetUp(double ratio) async {
     await SystemChrome.setEnabledSystemUIOverlays([]);
@@ -165,6 +172,14 @@ class VlcPageState extends State<VlcPage> {
                   ),
                 ),
               ),
+              Visibility(
+                visible: showSeek,
+                child: Center(
+                    child: Text(
+                  (seekDis * .25).toInt().toString(),
+                  textScaleFactor: 2.5,
+                )),
+              ),
               Positioned(
                 top: 0,
                 bottom: 0,
@@ -179,6 +194,44 @@ class VlcPageState extends State<VlcPage> {
                   onDoubleTap: () {
                     playOrPauseVideo();
                   },
+//TODO: Implement drag
+                  // onHorizontalDragStart: (details) {
+                  //   seekPosFirst = details.globalPosition.dx;
+                  //   setState(() {
+                  //     showSeek = true;
+                  //   });
+                  // },
+                  // onHorizontalDragEnd: (details) {
+                  //   seekPosFirst = 0.0;
+
+                  //   seekDis = 0.0;
+                  //   setState(() {
+                  //     showSeek = false;
+                  //   });
+                  // },
+                  // onHorizontalDragUpdate: (details) {
+                  //   print(details.delta.dx);
+                  //   setState(() {
+                  //     seekDis = details.globalPosition.dx - seekPosFirst;
+                  //     // sliderValue = seekDis * .25.toDouble();
+
+                  //     _videoViewController.setTime(
+                  //         (_videoViewController.position +
+                  //                 Duration(seconds: (seekDis * .25).toInt()))
+                  //             .inMilliseconds);
+                  //     // double tmpSlidervalue = sliderValue + seekDis;
+                  //     // tmpSlidervalue > 0
+                  //     //     ? sliderValue = tmpSlidervalue
+                  //     //     : sliderValue = 1;
+                  //   });
+
+                  // videoPlayerController.seekTo(
+                  //     videoPlayerController.value.position +
+                  //         Duration(seconds: (seekDis * .25).toInt()));
+
+                  // print(seekDis);
+                  // },
+
                   // onScaleUpdate: (details) {
                   //   if (details.scale > 1) {
                   //     print("zoom");
@@ -230,24 +283,50 @@ class VlcPageState extends State<VlcPage> {
                                               .length,
                                           '')),
                                   Expanded(
-                                    child: Slider(
-                                      activeColor: Colors.white,
-                                      value: sliderValue,
-                                      min: 0.0,
-                                      max: _videoViewController.duration == null
-                                          ? (sliderValue + 1)
-                                          : _videoViewController
-                                              .duration.inSeconds
-                                              .toDouble(),
-                                      onChanged: (progress) {
-                                        setState(() {
-                                          sliderValue =
-                                              progress.floor().toDouble();
-                                        });
-                                        //convert to Milliseconds since VLC requires MS to set time
-                                        _videoViewController.setTime(
-                                            sliderValue.toInt() * 1000);
-                                      },
+                                    child: SliderTheme(
+                                      data: SliderTheme.of(context).copyWith(
+                                          thumbColor: Colors.pink.shade400,
+                                          activeTrackColor: Colors.white,
+                                          inactiveTrackColor: Colors.white60,
+                                          thumbShape: RoundSliderThumbShape(),
+                                          tickMarkShape:
+                                              RoundSliderTickMarkShape(),
+                                          valueIndicatorColor: Colors.white38,
+                                          overlayColor: Colors.pink.shade400
+                                              .withOpacity(.3)),
+                                      child: Slider(
+                                        value: sliderValue,
+                                        divisions: 10000,
+                                        label: _videoViewController.position
+                                            .toString()
+                                            .replaceRange(
+                                                _videoViewController.position
+                                                    .toString()
+                                                    .lastIndexOf('.'),
+                                                _videoViewController.position
+                                                    .toString()
+                                                    .length,
+                                                ''),
+                                        // inactiveColor: Colors.black54,
+
+                                        min: 0.0,
+                                        max: _videoViewController.duration ==
+                                                null
+                                            ? (sliderValue + 1)
+                                            : _videoViewController
+                                                .duration.inSeconds
+                                                .toDouble(),
+                                        onChanged: (progress) {
+                                          print(progress);
+                                          setState(() {
+                                            sliderValue =
+                                                progress.floor().toDouble();
+                                          });
+                                          //convert to Milliseconds since VLC requires MS to set time
+                                          _videoViewController.setTime(
+                                              sliderValue.toInt() * 1000);
+                                        },
+                                      ),
                                     ),
                                   ),
                                   Text(_videoViewController.duration
@@ -388,30 +467,45 @@ class VlcPageState extends State<VlcPage> {
       int selectedSubId = await showDialog(
         context: context,
         builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text("Select Subtitle"),
-            content: Container(
-              width: double.maxFinite,
-              height: 250,
-              child: ListView.builder(
-                itemCount: subtitleTracks.keys.length + 1,
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    title: Text(
-                      index < subtitleTracks.keys.length
-                          ? subtitleTracks.values.elementAt(index).toString()
-                          : 'Disable',
+          return BlurredDialog(
+            height: scrnheight * .7,
+            width: scrnwidth * .6,
+            child: Container(
+              // width: double.maxFinite,
+              // height: 250,
+              child: Column(
+                children: [
+                  Center(
+                    child: Text(
+                      "Select Subtitle",
+                      textScaleFactor: 1.4,
                     ),
-                    onTap: () {
-                      Navigator.pop(
-                        context,
-                        index < subtitleTracks.keys.length
-                            ? subtitleTracks.keys.elementAt(index)
-                            : -1,
-                      );
-                    },
-                  );
-                },
+                  ),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: subtitleTracks.keys.length + 1,
+                      itemBuilder: (context, index) {
+                        return ListTile(
+                          title: Text(
+                            index < subtitleTracks.keys.length
+                                ? subtitleTracks.values
+                                    .elementAt(index)
+                                    .toString()
+                                : 'Disable',
+                          ),
+                          onTap: () {
+                            Navigator.pop(
+                              context,
+                              index < subtitleTracks.keys.length
+                                  ? subtitleTracks.keys.elementAt(index)
+                                  : -1,
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
               ),
             ),
           );
@@ -433,30 +527,43 @@ class VlcPageState extends State<VlcPage> {
       int selectedAudioTrackId = await showDialog(
         context: context,
         builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text("Select Audio"),
-            content: Container(
-              width: double.maxFinite,
-              height: 250,
-              child: ListView.builder(
-                itemCount: audioTracks.keys.length + 1,
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    title: Text(
-                      index < audioTracks.keys.length
-                          ? audioTracks.values.elementAt(index).toString()
-                          : 'Disable',
+          return BlurredDialog(
+            height: scrnheight * .7,
+            width: scrnwidth * .6,
+            child: Container(
+              // width: double.maxFinite,
+              // height: 250,
+              child: Column(
+                children: [
+                  Center(
+                    child: Text(
+                      "Select Audio",
+                      textScaleFactor: 1.4,
                     ),
-                    onTap: () {
-                      Navigator.pop(
-                        context,
-                        index < audioTracks.keys.length
-                            ? audioTracks.keys.elementAt(index)
-                            : -1,
-                      );
-                    },
-                  );
-                },
+                  ),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: audioTracks.keys.length + 1,
+                      itemBuilder: (context, index) {
+                        return ListTile(
+                          title: Text(
+                            index < audioTracks.keys.length
+                                ? audioTracks.values.elementAt(index).toString()
+                                : 'Disable',
+                          ),
+                          onTap: () {
+                            Navigator.pop(
+                              context,
+                              index < audioTracks.keys.length
+                                  ? audioTracks.keys.elementAt(index)
+                                  : -1,
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
               ),
             ),
           );
