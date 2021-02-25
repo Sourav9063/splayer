@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+
 import 'package:permission_handler/permission_handler.dart';
 
 import 'package:splayer/GlobalVar.dart';
@@ -8,6 +9,8 @@ import 'package:splayer/Screens/GivenVlcpage.dart';
 import 'package:splayer/Screens/player.dart';
 import 'package:splayer/Screens/vlcPlayer.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
+
+import 'Screens/VlcNewPage.dart';
 
 void main() {
   runApp(MyApp());
@@ -38,16 +41,23 @@ class LocalFile extends StatefulWidget {
 class _LocalFileState extends State<LocalFile> {
   List videoList = [];
   List<String> folderNameList = [];
-  bool permission;
+  bool permission = false;
+  List<String> allAccessibleFolder = [];
 
   Future<void> getList() async {
     print("GetList called");
+    // setState(() {
+    //   loading = true;
+    // });
+
     try {
       Directory dir = Directory('/storage/emulated/0/');
-
-      videoList = dir
-          .listSync(recursive: true, followLinks: false)
-          .map((item) => item.path)
+      permission = true;
+      videoList = await dir
+          .list(recursive: false, followLinks: false)
+          .map((item) {
+            return item.path;
+          })
           .where((item) =>
               item.endsWith(".mp4") ||
               item.endsWith(".avi") ||
@@ -56,18 +66,52 @@ class _LocalFileState extends State<LocalFile> {
               item.endsWith(".m4v") ||
               item.endsWith(".webm"))
           .toList();
-      permission = true;
-      videoList.sort();
-      Set<String> foldername = {};
-      for (String loc in videoList) {
-        loc = loc.replaceRange(loc.lastIndexOf('/'), loc.length, '');
+      allAccessibleFolder =
+          await dir.list().map((FileSystemEntity event) => event.path).toList();
 
-        foldername.add(loc);
-      }
-      setState(() {
-        folderNameList = foldername.toList();
+      // allAccessibleFolder.forEach((e) => print(e));
+      allAccessibleFolder.removeWhere((element) => element.endsWith('Android'));
+
+      // allAccessibleFolder.forEach((e) => print(e));
+      allAccessibleFolder.forEach((element) async {
+        // print(loadingFolder);
+        try {
+          Directory tmpDir = Directory(element);
+
+          List<String> tmp = await tmpDir
+              .list(recursive: true, followLinks: false)
+              .map((e) => e.path)
+              .where((item) =>
+                  item.endsWith(".mp4") ||
+                  item.endsWith(".avi") ||
+                  item.endsWith(".mkv") ||
+                  item.endsWith(".MOV") ||
+                  item.endsWith(".m4v") ||
+                  item.endsWith(".webm"))
+              .toList();
+          tmp.forEach((element) {
+            // print(element);
+            videoList.add(element);
+            // print(videoList.length);
+          });
+        } catch (e) {
+          // print(e);
+        } finally {
+          videoList.sort();
+          Set<String> foldername = {};
+          for (String loc in videoList) {
+            loc = loc.replaceRange(loc.lastIndexOf('/'), loc.length, '');
+
+            foldername.add(loc);
+          }
+          setState(() {
+            folderNameList = foldername.toList();
+            folderNameList.sort();
+          });
+        }
       });
     } catch (e) {
+      print(e);
       permission = false;
     }
   }
@@ -84,7 +128,7 @@ class _LocalFileState extends State<LocalFile> {
     mediaQuery = MediaQuery.of(context);
     scrnheight = mediaQuery.size.height;
     scrnwidth = mediaQuery.size.width;
-    print('Update');
+    // print('Update');
     return Scaffold(
       appBar: AppBar(
         title: Text("Splayer"),
@@ -99,10 +143,10 @@ class _LocalFileState extends State<LocalFile> {
       ),
       body: permission
           ? RefreshIndicator(
-              onRefresh: () {
-                return getList();
-              },
+              onRefresh: getList,
               child: ListView.builder(
+                physics: const BouncingScrollPhysics(
+                    parent: AlwaysScrollableScrollPhysics()),
                 itemCount: folderNameList.length,
                 itemBuilder: (context, index) {
                   return ListTile(
@@ -215,61 +259,70 @@ class FoldersVideos extends StatelessWidget {
         title: Text(locationString.replaceRange(
             0, locationString.lastIndexOf('/') + 1, '')),
       ),
-      body: ListView.builder(
-          // cacheExtent: 10000,
-          itemCount: videoList.length,
-          itemBuilder: (context, index) {
-            return Card(
-              color: Colors.white10,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0),
-                child: ListTile(
-                    onLongPress: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                VlcPage(link: videoList[index]),
-                          ));
-                    },
-                    onTap: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                VideoPlayerScreen(link: videoList[index]),
-                          ));
-                    },
-                    title: Text(videoList[index].replaceRange(
-                        0, videoList[index].lastIndexOf('/') + 1, '')),
-                    // trailing: Icon(Icons.video_library),
-                    trailing: FutureBuilder(
-                      future: VideoThumbnail.thumbnailData(
-                        video: videoList[index],
-                        // thumbnailPath: '/storage/emulated/0/temp',
-                        imageFormat: ImageFormat.JPEG,
-                        maxWidth: 300,
-                        quality: 25,
+      body: Column(
+        children: [
+          Text(locationString + "/"),
+          Expanded(
+            child: ListView.builder(
+                // cacheExtent: 10000,
+                itemCount: videoList.length,
+                itemBuilder: (context, index) {
+                  return Card(
+                    color: Colors.white10,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: ListTile(
+                          onLongPress: () {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        // VlcPage(link: videoList[index]),
+                                        VlcNewPlayer(
+                                          location: videoList[index],
+                                        )));
+                          },
+                          onTap: () {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      VideoPlayerScreen(link: videoList[index]),
+                                ));
+                          },
+                          title: Text(videoList[index].replaceRange(
+                              0, videoList[index].lastIndexOf('/') + 1, '')),
+                          // trailing: Icon(Icons.video_library),
+                          trailing: FutureBuilder(
+                            future: VideoThumbnail.thumbnailData(
+                              video: videoList[index],
+                              // thumbnailPath: '/storage/emulated/0/temp',
+                              imageFormat: ImageFormat.JPEG,
+                              maxWidth: 300,
+                              quality: 25,
 
-                        timeMs: 100000,
-                      ),
-                      builder: (context, snapshot) {
-                        if (snapshot.hasData) {
-                          // return Image.file(File(snapshot.data));
-                          return Image.memory(snapshot.data);
-                        } else if (snapshot.hasError)
-                          return Container(
-                            height: 1,
-                            width: 1,
-                          );
-                        return CircularProgressIndicator(
-                          strokeWidth: 1,
-                        );
-                      },
-                    )),
-              ),
-            );
-          }),
+                              timeMs: 100000,
+                            ),
+                            builder: (context, snapshot) {
+                              if (snapshot.hasData) {
+                                // return Image.file(File(snapshot.data));
+                                return Image.memory(snapshot.data);
+                              } else if (snapshot.hasError)
+                                return Container(
+                                  height: 1,
+                                  width: 1,
+                                );
+                              return CircularProgressIndicator(
+                                strokeWidth: 1,
+                              );
+                            },
+                          )),
+                    ),
+                  );
+                }),
+          ),
+        ],
+      ),
     );
   }
 }

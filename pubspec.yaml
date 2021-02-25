@@ -23,8 +23,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  cupertino_icons: ^1.0.0
-  flutter_vlc_player: ^4.0.3
+  flutter_vlc_player: ^5.0.4
+
   permission_handler: ^5.0.1+1
   shared_preferences: ^0.5.12+4
   video_player: ^1.0.1
