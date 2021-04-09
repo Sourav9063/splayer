@@ -37,17 +37,25 @@ class _VlcNewPlayerState extends State<VlcNewPlayer> {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        VlcPlayer(
-          aspectRatio: videoRatio,
-          controller: vlcPlayerController,
-          placeholder: Center(
-            child: CircularProgressIndicator(),
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: VlcPlayer(
+            aspectRatio: videoRatio,
+            controller: vlcPlayerController,
+            placeholder: Center(
+              child: CircularProgressIndicator(),
+            ),
           ),
         ),
         Center(
-          child: RaisedButton(
+          child: ElevatedButton(
+            child: Text("Ratio"),
             onPressed: () async {
-              print(await vlcPlayerController.getVideoAspectRatio());
+              var ratio = await vlcPlayerController.getVideoAspectRatio();
+              print(ratio);
             },
           ),
         ),
@@ -62,11 +70,12 @@ class _VlcNewPlayerState extends State<VlcNewPlayer> {
     vlcPlayerController = VlcPlayerController.file(
       file,
       onInit: () async {
-        // videoRatio =
-        //     double.parse(await vlcPlayerController.getVideoAspectRatio());
-        // print(await vlcPlayerController.getVideoAspectRatio());
-
         await vlcPlayerController.play();
+        String aspectratio = await vlcPlayerController.getVideoAspectRatio();
+        videoRatio = double.parse(aspectratio);
+        print(aspectratio);
+        print(videoRatio);
+        await scrnSetUp(videoRatio);
         // setState(() {});
       },
     );

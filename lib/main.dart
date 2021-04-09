@@ -1,6 +1,8 @@
 import 'dart:io';
 
+import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 
 import 'package:permission_handler/permission_handler.dart';
 
@@ -131,7 +133,10 @@ class _LocalFileState extends State<LocalFile> {
     // print('Update');
     return Scaffold(
       appBar: AppBar(
-        title: Text("Splayer"),
+        title: Padding(
+          padding: EdgeInsets.all(3),
+          child: Text("Splayer"),
+        ),
         actions: [
           IconButton(
               icon: Icon(Icons.link),
@@ -144,25 +149,38 @@ class _LocalFileState extends State<LocalFile> {
       body: permission
           ? RefreshIndicator(
               onRefresh: getList,
-              child: ListView.builder(
-                physics: const BouncingScrollPhysics(
-                    parent: AlwaysScrollableScrollPhysics()),
-                itemCount: folderNameList.length,
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    onTap: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => FoldersVideos(
-                                locationString: folderNameList[index]),
-                          ));
-                    },
-                    title: Text(folderNameList[index].replaceRange(
-                        0, folderNameList[index].lastIndexOf('/') + 1, '')),
-                    leading: Icon(Icons.folder),
-                  );
-                },
+              child: AnimationLimiter(
+                child: ListView.builder(
+                  physics: const BouncingScrollPhysics(
+                      parent: AlwaysScrollableScrollPhysics()),
+                  itemCount: folderNameList.length,
+                  itemBuilder: (context, index) {
+                    return AnimationConfiguration.staggeredList(
+                      duration: const Duration(milliseconds: 500),
+                      position: index,
+                      child: SlideAnimation(
+                        verticalOffset: 50.0,
+                        child: FadeInAnimation(
+                          child: ListTile(
+                            onTap: () {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => FoldersVideos(
+                                        locationString: folderNameList[index]),
+                                  ));
+                            },
+                            title: Text(folderNameList[index].replaceRange(
+                                0,
+                                folderNameList[index].lastIndexOf('/') + 1,
+                                '')),
+                            leading: Icon(Icons.folder),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
               ),
             )
           : Column(
@@ -172,7 +190,7 @@ class _LocalFileState extends State<LocalFile> {
                 Center(child: Text("Storage permission needed")),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: RaisedButton(
+                  child: ElevatedButton(
                     onPressed: () async {
                       await Permission.storage.request();
 
