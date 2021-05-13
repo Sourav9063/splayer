@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -6,7 +7,7 @@ import 'package:flutter_vlc_player/flutter_vlc_player.dart';
 import 'package:splayer/GlobalVar.dart';
 
 class VlcNewPlayer extends StatefulWidget {
-  VlcNewPlayer({Key key, @required this.location}) : super(key: key);
+  VlcNewPlayer({Key? key, required this.location}) : super(key: key);
   final String location;
 
   @override
@@ -14,7 +15,7 @@ class VlcNewPlayer extends StatefulWidget {
 }
 
 class _VlcNewPlayerState extends State<VlcNewPlayer> {
-  VlcPlayerController vlcPlayerController;
+  late VlcPlayerController vlcPlayerController;
   double videoRatio = scrnheight / scrnwidth;
   @override
   void initState() {
@@ -71,7 +72,7 @@ class _VlcNewPlayerState extends State<VlcNewPlayer> {
       file,
       onInit: () async {
         await vlcPlayerController.play();
-        String aspectratio = await vlcPlayerController.getVideoAspectRatio();
+        String aspectratio = await (vlcPlayerController.getVideoAspectRatio() as FutureOr<String>);
         videoRatio = double.parse(aspectratio);
         print(aspectratio);
         print(videoRatio);

@@ -6,7 +6,7 @@ class ResumeTime {
     await sher.setInt(vid, time);
   }
 
-  static Future<int> getResumeTimeInSecond(String vid) async {
+  static Future<int?> getResumeTimeInSecond(String vid) async {
     SharedPreferences sher = await SharedPreferences.getInstance();
     return sher.getInt(vid);
   }

@@ -1,12 +1,18 @@
+
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 
 import 'package:permission_handler/permission_handler.dart';
+import 'package:provider/provider.dart';
+import 'package:splayer/BackEnd/Provider/ListOfFoldersProvider.dart';
+import 'package:splayer/BackEnd/Provider/storageProvider.dart';
 
 import 'package:splayer/GlobalVar.dart';
+import 'package:splayer/Screens/FolderPageWithProvider.dart';
 import 'package:splayer/Screens/GivenVlcpage.dart';
 import 'package:splayer/Screens/player.dart';
 import 'package:splayer/Screens/vlcPlayer.dart';
@@ -28,20 +34,34 @@ class MyApp extends StatelessWidget {
           scaffoldBackgroundColor: Color(0xff060621),
           accentColor: Color(0xff08f0f0),
           appBarTheme: AppBarTheme().copyWith(color: Colors.pinkAccent[400])),
-      home: LocalFile(),
+      home: MultiProvider(
+        providers: [
+          // FutureProvider<PermissionStatus>(
+          //     create: (context) => StorageAccessClass.reqAccess(),
+          //     initialData: PermissionStatus.limited),
+          ChangeNotifierProvider(
+            create: (context) => StorageStatusProvider(),
+            
+          ),
+          ChangeNotifierProvider(
+            create: (context) => ListOfFoldersProvider(),
+          )
+        ],
+        child: FolderPageWithProvider(),
+      ),
     );
   }
 }
 
 class LocalFile extends StatefulWidget {
-  const LocalFile({Key key}) : super(key: key);
+  const LocalFile({Key? key}) : super(key: key);
 
   @override
   _LocalFileState createState() => _LocalFileState();
 }
 
 class _LocalFileState extends State<LocalFile> {
-  List videoList = [];
+  List<String> videoList = [];
   List<String> folderNameList = [];
   bool permission = false;
   List<String> allAccessibleFolder = [];
@@ -54,20 +74,22 @@ class _LocalFileState extends State<LocalFile> {
 
     try {
       Directory dir = Directory('/storage/emulated/0/');
+      // Directory dir1 = Directory("/sdcard/");
+      // dir1.list();
       permission = true;
-      videoList = await dir
-          .list(recursive: false, followLinks: false)
-          .map((item) {
-            return item.path;
-          })
-          .where((item) =>
-              item.endsWith(".mp4") ||
-              item.endsWith(".avi") ||
-              item.endsWith(".mkv") ||
-              item.endsWith(".MOV") ||
-              item.endsWith(".m4v") ||
-              item.endsWith(".webm"))
-          .toList();
+      // videoList = await dir
+      //     .list(recursive: true, followLinks: false)
+      //     .map((item) {
+      //       return item.path;
+      //     })
+      //     .where((item) =>
+      //         item.endsWith(".mp4") ||
+      //         item.endsWith(".avi") ||
+      //         item.endsWith(".mkv") ||
+      //         item.endsWith(".MOV") ||
+      //         item.endsWith(".m4v") ||
+      //         item.endsWith(".webm"))
+      //     .toList();
       allAccessibleFolder =
           await dir.list().map((FileSystemEntity event) => event.path).toList();
 
@@ -76,7 +98,7 @@ class _LocalFileState extends State<LocalFile> {
 
       // allAccessibleFolder.forEach((e) => print(e));
       allAccessibleFolder.forEach((element) async {
-        // print(loadingFolder);
+        // print(element);
         try {
           Directory tmpDir = Directory(element);
 
@@ -93,29 +115,38 @@ class _LocalFileState extends State<LocalFile> {
               .toList();
           tmp.forEach((element) {
             // print(element);
-            videoList.add(element);
+            setState(() {
+              videoList.add(element);
+            });
+
             // print(videoList.length);
           });
         } catch (e) {
           // print(e);
-        } finally {
-          videoList.sort();
-          Set<String> foldername = {};
-          for (String loc in videoList) {
-            loc = loc.replaceRange(loc.lastIndexOf('/'), loc.length, '');
-
-            foldername.add(loc);
-          }
-          setState(() {
-            folderNameList = foldername.toList();
-            folderNameList.sort();
-          });
         }
       });
+      // videoList.sort();
+      Set<String> foldername = {};
+
+      for (String loc in videoList) {
+        loc = loc.replaceRange(loc.lastIndexOf('/'), loc.length, '');
+
+        foldername.add(loc);
+      }
+
+      setState(() {
+        folderNameList = foldername.toList();
+
+        print("Setstate called");
+      });
+      print(folderNameList);
     } catch (e) {
       print(e);
-      permission = false;
+      setState(() {
+        permission = false;
+      });
     }
+    print(permission);
   }
 
   @override
@@ -155,6 +186,12 @@ class _LocalFileState extends State<LocalFile> {
                       parent: AlwaysScrollableScrollPhysics()),
                   itemCount: folderNameList.length,
                   itemBuilder: (context, index) {
+                    print(folderNameList.length);
+                    if (folderNameList.length == 0) {
+                      return Center(
+                        child: Text("There are no videos."),
+                      );
+                    }
                     return AnimationConfiguration.staggeredList(
                       duration: const Duration(milliseconds: 500),
                       position: index,
@@ -187,12 +224,16 @@ class _LocalFileState extends State<LocalFile> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Center(child: Text("Storage permission needed")),
+                Center(child: Text("Storage permission is needed")),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: ElevatedButton(
                     onPressed: () async {
-                      await Permission.storage.request();
+                      var storage = await Permission.storage.status;
+
+                      if (storage.isDenied) {
+                        await Permission.storage.request();
+                      }
 
                       if (await Permission.storage.isGranted) {
                         getList();
@@ -211,12 +252,12 @@ class _LocalFileState extends State<LocalFile> {
 }
 
 class LinkPage extends StatelessWidget {
-  const LinkPage({Key key}) : super(key: key);
+  const LinkPage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     String link = "Can't be null";
-    TextEditingController controller;
+    TextEditingController? controller;
     return Scaffold(
       body: Center(
         child: Column(
@@ -234,7 +275,7 @@ class LinkPage extends StatelessWidget {
                   labelText: "Video Link",
                   prefixIcon: Icon(Icons.link)),
             ),
-            RaisedButton(
+            ElevatedButton(
               onPressed: link == null
                   ? null
                   : () {
@@ -254,12 +295,12 @@ class LinkPage extends StatelessWidget {
 }
 
 class FoldersVideos extends StatelessWidget {
-  const FoldersVideos({Key key, this.locationString}) : super(key: key);
-  final String locationString;
+  const FoldersVideos({Key? key, this.locationString}) : super(key: key);
+  final String? locationString;
 
   @override
   Widget build(BuildContext context) {
-    Directory dir = Directory(locationString + '/');
+    Directory dir = Directory(locationString! + '/');
 
     List<String> videoList = dir
         .listSync(recursive: false, followLinks: false)
@@ -274,12 +315,12 @@ class FoldersVideos extends StatelessWidget {
         .toList();
     return Scaffold(
       appBar: AppBar(
-        title: Text(locationString.replaceRange(
-            0, locationString.lastIndexOf('/') + 1, '')),
+        title: Text(locationString!
+            .replaceRange(0, locationString!.lastIndexOf('/') + 1, '')),
       ),
       body: Column(
         children: [
-          Text(locationString + "/"),
+          Text(locationString! + "/"),
           Expanded(
             child: ListView.builder(
                 // cacheExtent: 10000,
@@ -311,7 +352,7 @@ class FoldersVideos extends StatelessWidget {
                           title: Text(videoList[index].replaceRange(
                               0, videoList[index].lastIndexOf('/') + 1, '')),
                           // trailing: Icon(Icons.video_library),
-                          trailing: FutureBuilder(
+                          trailing: FutureBuilder<Uint8List?>(
                             future: VideoThumbnail.thumbnailData(
                               video: videoList[index],
                               // thumbnailPath: '/storage/emulated/0/temp',
@@ -324,7 +365,7 @@ class FoldersVideos extends StatelessWidget {
                             builder: (context, snapshot) {
                               if (snapshot.hasData) {
                                 // return Image.file(File(snapshot.data));
-                                return Image.memory(snapshot.data);
+                                return Image.memory(snapshot.data!);
                               } else if (snapshot.hasError)
                                 return Container(
                                   height: 1,

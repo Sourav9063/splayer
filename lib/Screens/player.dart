@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -8,7 +9,7 @@ import 'package:splayer/GlobalVar.dart';
 import 'package:video_player/video_player.dart';
 
 class VideoPlayerScreen extends StatefulWidget {
-  VideoPlayerScreen({Key key, @required this.link}) : super(key: key);
+  VideoPlayerScreen({Key? key, required this.link}) : super(key: key);
   final String link;
 
   @override
@@ -16,15 +17,15 @@ class VideoPlayerScreen extends StatefulWidget {
 }
 
 class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
-  VideoPlayerController videoPlayerController;
+  late VideoPlayerController videoPlayerController;
   double seekPosFirst = 0.0;
   double seekDis = 0.0;
   bool showSeek = false;
-  Orientation or;
+  Orientation? or;
   double videoRatio = 16 / 9;
   bool show = false;
   // ValueNotifier<Duration> passedTime = ValueNotifier(Duration(seconds: 0));
-  double vSpeed = 1;
+  double? vSpeed = 1;
 
   void scrnSetUp(double ratio) async {
     await SystemChrome.setEnabledSystemUIOverlays([]);
@@ -38,17 +39,17 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   }
 
   void setResumeOnstart() async {
-    int second = await ResumeTime.getResumeTimeInSecond(widget.link);
+    int? second = await ResumeTime.getResumeTimeInSecond(widget.link);
 
     if (second != null) videoPlayerController.seekTo(Duration(seconds: second));
   }
 
   void setResumeOnend() async {
-    Duration second = await videoPlayerController.position;
+    Duration second = await (videoPlayerController.position as FutureOr<Duration>);
     ResumeTime.setResumeTime(widget.link, second.inSeconds);
   }
 
-  File file;
+  late File file;
   //  = Orientation.landscape;
   @override
   void initState() {
@@ -89,9 +90,9 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     SystemChrome.setEnabledSystemUIOverlays([]);
     return Scaffold(
         backgroundColor: Colors.black,
-        body: videoPlayerController.value.initialized
+        body: videoPlayerController.value.isInitialized
             ? Stack(
-                overflow: Overflow.visible,
+
                 children: [
                   Center(
                     child: GestureDetector(
@@ -254,7 +255,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                                                 value: 2,
                                               ),
                                             ],
-                                            onChanged: (value) {
+                                            onChanged: (dynamic value) {
                                               setState(() {
                                                 vSpeed = value;
                                               });
@@ -288,7 +289,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                                 ValueListenableBuilder(
                                   valueListenable: videoPlayerController,
                                   builder: (BuildContext context,
-                                      VideoPlayerValue value, Widget child) {
+                                      VideoPlayerValue value, Widget? child) {
                                     // print(value.toString());
                                     return Text(
                                       value.position.toString().replaceRange(

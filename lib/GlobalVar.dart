@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
-MediaQueryData mediaQuery;
-double scrnheight;
-double scrnwidth;
+late MediaQueryData mediaQuery;
+late double scrnheight;
+late double scrnwidth;
+
+class ScaffoldKeys {
+  static final folderListPageScaffoldKey = GlobalKey<ScaffoldState>();
+}
