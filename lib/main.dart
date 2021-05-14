@@ -1,8 +1,6 @@
-
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 
@@ -13,9 +11,7 @@ import 'package:splayer/BackEnd/Provider/storageProvider.dart';
 
 import 'package:splayer/GlobalVar.dart';
 import 'package:splayer/Screens/FolderPageWithProvider.dart';
-import 'package:splayer/Screens/GivenVlcpage.dart';
 import 'package:splayer/Screens/player.dart';
-import 'package:splayer/Screens/vlcPlayer.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
 import 'Screens/VlcNewPage.dart';
@@ -36,12 +32,8 @@ class MyApp extends StatelessWidget {
           appBarTheme: AppBarTheme().copyWith(color: Colors.pinkAccent[400])),
       home: MultiProvider(
         providers: [
-          // FutureProvider<PermissionStatus>(
-          //     create: (context) => StorageAccessClass.reqAccess(),
-          //     initialData: PermissionStatus.limited),
           ChangeNotifierProvider(
             create: (context) => StorageStatusProvider(),
-            
           ),
           ChangeNotifierProvider(
             create: (context) => ListOfFoldersProvider(),
@@ -200,12 +192,12 @@ class _LocalFileState extends State<LocalFile> {
                         child: FadeInAnimation(
                           child: ListTile(
                             onTap: () {
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => FoldersVideos(
-                                        locationString: folderNameList[index]),
-                                  ));
+                              // Navigator.push(
+                              //     context,
+                              //     MaterialPageRoute(
+                              //       builder: (context) => FoldersVideos(
+                              //           locationString: folderNameList[index]),
+                              //     ));
                             },
                             title: Text(folderNameList[index].replaceRange(
                                 0,
@@ -294,94 +286,3 @@ class LinkPage extends StatelessWidget {
   }
 }
 
-class FoldersVideos extends StatelessWidget {
-  const FoldersVideos({Key? key, this.locationString}) : super(key: key);
-  final String? locationString;
-
-  @override
-  Widget build(BuildContext context) {
-    Directory dir = Directory(locationString! + '/');
-
-    List<String> videoList = dir
-        .listSync(recursive: false, followLinks: false)
-        .map((item) => item.path)
-        .where((item) =>
-            item.endsWith(".mp4") ||
-            item.endsWith(".avi") ||
-            item.endsWith(".mkv") ||
-            item.endsWith(".MOV") ||
-            item.endsWith(".m4v") ||
-            item.endsWith(".webm"))
-        .toList();
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(locationString!
-            .replaceRange(0, locationString!.lastIndexOf('/') + 1, '')),
-      ),
-      body: Column(
-        children: [
-          Text(locationString! + "/"),
-          Expanded(
-            child: ListView.builder(
-                // cacheExtent: 10000,
-                itemCount: videoList.length,
-                itemBuilder: (context, index) {
-                  return Card(
-                    color: Colors.white10,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
-                      child: ListTile(
-                          onLongPress: () {
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) =>
-                                        // VlcPage(link: videoList[index]),
-                                        VlcNewPlayer(
-                                          location: videoList[index],
-                                        )));
-                          },
-                          onTap: () {
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      VideoPlayerScreen(link: videoList[index]),
-                                ));
-                          },
-                          title: Text(videoList[index].replaceRange(
-                              0, videoList[index].lastIndexOf('/') + 1, '')),
-                          // trailing: Icon(Icons.video_library),
-                          trailing: FutureBuilder<Uint8List?>(
-                            future: VideoThumbnail.thumbnailData(
-                              video: videoList[index],
-                              // thumbnailPath: '/storage/emulated/0/temp',
-                              imageFormat: ImageFormat.JPEG,
-                              maxWidth: 300,
-                              quality: 25,
-
-                              timeMs: 100000,
-                            ),
-                            builder: (context, snapshot) {
-                              if (snapshot.hasData) {
-                                // return Image.file(File(snapshot.data));
-                                return Image.memory(snapshot.data!);
-                              } else if (snapshot.hasError)
-                                return Container(
-                                  height: 1,
-                                  width: 1,
-                                );
-                              return CircularProgressIndicator(
-                                strokeWidth: 1,
-                              );
-                            },
-                          )),
-                    ),
-                  );
-                }),
-          ),
-        ],
-      ),
-    );
-  }
-}

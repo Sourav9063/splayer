@@ -14,14 +14,16 @@ class StorageStatusProvider extends ChangeNotifier {
 
   Future<void> checkPermission() async {
     permissionStatus = await Permission.storage.status;
+    
   }
 
   Future<void> reqAccess() async {
+     print("reqAccess Called");
     var currentStatus = await Permission.storage.status;
     if (currentStatus.isDenied) {
       var status = await Permission.storage.request();
 
-      // print(status);
+     
       permissionStatus = status;
     } else {
       permissionStatus = currentStatus;
