@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:splayer/BackEnd/Provider/storageProvider.dart';
 
 import '../GlobalVar.dart';
+import '../main.dart';
 import 'HomeScreens/list_Of_Videos.dart';
 import 'HomeScreens/req_screen.dart';
 
@@ -17,8 +18,20 @@ class FolderPageWithProvider extends StatelessWidget {
     scrnwidth = mediaQuery.size.width;
     context.read<StorageStatusProvider>().checkPermission();
     return Scaffold(
-    
-
+      appBar: AppBar(
+        title: Padding(
+          padding: EdgeInsets.all(3),
+          child: Text("Splayer"),
+        ),
+        actions: [
+          IconButton(
+              icon: Icon(Icons.link),
+              onPressed: () {
+                Navigator.push(
+                    context, MaterialPageRoute(builder: (_) => LinkPage()));
+              })
+        ],
+      ),
       body: Consumer<StorageStatusProvider>(
         builder: (context, value, child) {
           print(value.permissionStatus);
@@ -35,5 +48,3 @@ class FolderPageWithProvider extends StatelessWidget {
     );
   }
 }
-
-

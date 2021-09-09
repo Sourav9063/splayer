@@ -4,7 +4,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_vlc_player/flutter_vlc_player.dart';
+import 'package:provider/provider.dart';
+import 'package:splayer/BackEnd/Times.dart';
 import 'package:splayer/GlobalVar.dart';
+import 'package:video_player/video_player.dart';
 
 class VlcNewPlayer extends StatefulWidget {
   VlcNewPlayer({Key? key, required this.location}) : super(key: key);
@@ -16,73 +19,66 @@ class VlcNewPlayer extends StatefulWidget {
 
 class _VlcNewPlayerState extends State<VlcNewPlayer> {
   late VlcPlayerController vlcPlayerController;
-  double videoRatio = scrnheight / scrnwidth;
+  double aspectR = (scrnheight / scrnwidth);
+  double currentPosition = 0;
+  bool firstFrameCall = false;
+
   @override
   void initState() {
     super.initState();
-    SystemChrome.setEnabledSystemUIOverlays([SystemUiOverlay.bottom]);
-    scrnSetUp(videoRatio);
-    loadFromLocation(widget.location);
+    vlcPlayerController = controllerSetUp(widget.location);
+
+    vlcPlayerController.addListener(listner);
+    vlcPlayerController.addOnInitListener(() {});
   }
 
   @override
-  void dispose() {
-    SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
-    SystemChrome.setPreferredOrientations(
-        [DeviceOrientation.portraitDown, DeviceOrientation.portraitUp]);
-    vlcPlayerController.dispose();
+  void dispose() async {
     super.dispose();
+    await SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
+
+    await SystemChrome.setPreferredOrientations(
+        [DeviceOrientation.portraitDown, DeviceOrientation.portraitUp]);
+    setResumeOnend();
+    // vlcPlayerController.removeListener(listner);
+    await vlcPlayerController.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Positioned(
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          child: VlcPlayer(
-            aspectRatio: videoRatio,
-            controller: vlcPlayerController,
-            placeholder: Center(
-              child: CircularProgressIndicator(),
-            ),
+  // @override
+  // void didChangeDependencies() {
+  //   super.didChangeDependencies();
+  //   WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+
+  //   });
+  // }
+
+  VlcPlayerController controllerSetUp(String link) {
+    // link = 'https://media.w3.org/2010/05/sintel/trailer.mp4';
+    if (link.startsWith('http')) {
+      print("Http");
+      return VlcPlayerController.network(link);
+    } else {
+      print("File");
+      var file = File(link);
+      return VlcPlayerController.file(
+        file,
+        autoInitialize: true,
+        autoPlay: true,
+        options: VlcPlayerOptions(
+          subtitle: VlcSubtitleOptions(
+            [
+              VlcSubtitleOptions.opacity(200),
+              VlcSubtitleOptions.fontSize(50),
+            ],
           ),
         ),
-        Center(
-          child: ElevatedButton(
-            child: Text("Ratio"),
-            onPressed: () async {
-              var ratio = await vlcPlayerController.getVideoAspectRatio();
-              print(ratio);
-            },
-          ),
-        ),
-      ],
-    );
+      );
+    }
   }
 
-//methods
-  Future<void> loadFromLocation(String location) async {
-    File file = File(location);
-
-    vlcPlayerController = VlcPlayerController.file(
-      file,
-      onInit: () async {
-        await vlcPlayerController.play();
-        String aspectratio = await (vlcPlayerController.getVideoAspectRatio() as FutureOr<String>);
-        videoRatio = double.parse(aspectratio);
-        print(aspectratio);
-        print(videoRatio);
-        await scrnSetUp(videoRatio);
-        // setState(() {});
-      },
-    );
-  }
-
-  Future<void> scrnSetUp(double ratio) async {
+  void scrnSetUp(double ratio) async {
+    // print("aspect reaito");
+    await SystemChrome.setEnabledSystemUIOverlays([]);
     if (ratio >= 1) {
       await SystemChrome.setPreferredOrientations(
           [DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight]);
@@ -90,5 +86,98 @@ class _VlcNewPlayerState extends State<VlcNewPlayer> {
       await SystemChrome.setPreferredOrientations(
           [DeviceOrientation.portraitDown, DeviceOrientation.portraitUp]);
     }
+    setState(() {});
+    // setResumeOnstart();
   }
+
+  listner() {
+    if (!mounted) return;
+    if (vlcPlayerController.value.isInitialized) {
+      if (!firstFrameCall) {
+        firstFrameFun();
+      }
+      // scrnSetUp(vlcPlayerController.value.aspectRatio);
+      // print(vlcPlayerController.value.aspectRatio.toString() +
+      //     "***************************************************************************************************************************");
+      // print(vlcPlayerController.value.isPlaying.toString() +
+      //     "***************************************************************************************************************************");
+      // print(vlcPlayerController.value.toString() +
+      // "***************************************************************************************************************************");
+    }
+  }
+
+  Future<void> firstFrameFun() async {
+    bool playing = vlcPlayerController.value.isPlaying;
+
+    if (playing == false) {
+      return;
+    } else {
+      firstFrameCall = true;
+      await setResumeOnstart();
+      print(vlcPlayerController.value.aspectRatio.toString() +
+          "**********************************************************************************************************");
+      scrnSetUp(vlcPlayerController.value.aspectRatio);
+    }
+  }
+
+  Future<void> setResumeOnstart() async {
+    int? second = await ResumeTime.getResumeTimeInSecond(widget.location);
+
+    print(second.toString());
+    print("**************************************************************");
+
+    if (second != null) {
+      await vlcPlayerController.seekTo(Duration(seconds: second));
+      // setState(() {});
+    }
+  }
+
+  setResumeOnend() {
+    Duration second = vlcPlayerController.value.position;
+
+    print(second.toString());
+    ResumeTime.setResumeTime(widget.location, second.inSeconds);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    print("build");
+    return Scaffold(
+      // backgroundColor: Colors.white,
+      body: Stack(
+        children: [
+          Align(
+              alignment: Alignment.center,
+              child: VlcPlayer(
+                controller: vlcPlayerController,
+
+                // aspectRatio: vlcPlayerController.value.aspectRatio,
+                aspectRatio: MediaQuery.of(context).size.aspectRatio,
+
+                placeholder: Center(child: CircularProgressIndicator()),
+              )),
+          Align(
+            alignment: Alignment.center,
+            child: ElevatedButton(
+              onPressed: () async {
+                // setResumeOnstart();
+
+                await vlcPlayerController.setVideoAspectRatio(
+                    scrnwidth.floor().toString() +
+                        ":" +
+                        scrnheight.floor().toString());
+                // setState(() {
+                //   aspectR = scrnheight / scrnwidth;
+                // });
+              },
+              child: Text("test"),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // @override
+  // bool get wantKeepAlive => true;
 }

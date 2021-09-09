@@ -26,6 +26,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Splayer',
+      
       theme: ThemeData.dark().copyWith(
           scaffoldBackgroundColor: Color(0xff060621),
           accentColor: Color(0xff08f0f0),

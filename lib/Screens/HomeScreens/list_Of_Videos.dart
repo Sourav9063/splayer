@@ -13,14 +13,14 @@ import 'folder_video_list_screen.dart';
 class ListOfFolderProviderScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    context.read<ListOfFoldersProvider>().getVideoFolders();
-    // var listOfFolders = Provider.of<ListOfFoldersProvider>(context).folderList;
+    // context.read<ListOfFoldersProvider>().getVideoFolders();
+    var listOfFolders = Provider.of<ListOfFoldersProvider>(context);
     return Scaffold(
       key: ScaffoldKeys.folderListPageScaffoldKey,
       body: RefreshIndicator(
         onRefresh: () async {
           // await context.read<ListOfFoldersProvider>().getVideoFolders();
-          ListOfFolders.getVideoFolders();
+          listOfFolders.getVideoFolders();
         },
         child: Container(
           // child: Consumer<ListOfFoldersProvider>(

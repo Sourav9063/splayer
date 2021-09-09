@@ -45,7 +45,8 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   }
 
   void setResumeOnend() async {
-    Duration second = await (videoPlayerController.position as FutureOr<Duration>);
+    Duration second =
+        await (videoPlayerController.position as FutureOr<Duration>);
     ResumeTime.setResumeTime(widget.link, second.inSeconds);
   }
 
@@ -59,12 +60,12 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       videoPlayerController = VideoPlayerController.network(widget.link);
     else {
       file = File(widget.link);
-      videoPlayerController = VideoPlayerController.file(file);
+      videoPlayerController = VideoPlayerController.file(file,);
     }
     videoPlayerController.initialize().then((_) {
       videoPlayerController.play();
 
-      videoPlayerController.addListener(() {});
+      videoPlayerController.addListener(_listen);
       videoRatio = videoPlayerController.value.aspectRatio;
       // videoPlayerController.
       scrnSetUp(videoPlayerController.value.aspectRatio);
@@ -74,14 +75,21 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     });
   }
 
+  void _listen() {
+    if (!mounted) return;
+    setState(() {});
+    // print(videoPlayerController.)
+    
+  }
+
   @override
   void dispose() {
+    super.dispose();
     setResumeOnend();
     SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
     videoPlayerController.dispose();
     SystemChrome.setPreferredOrientations(
         [DeviceOrientation.portraitDown, DeviceOrientation.portraitUp]);
-    super.dispose();
   }
 
   @override
@@ -92,7 +100,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
         backgroundColor: Colors.black,
         body: videoPlayerController.value.isInitialized
             ? Stack(
-
                 children: [
                   Center(
                     child: GestureDetector(

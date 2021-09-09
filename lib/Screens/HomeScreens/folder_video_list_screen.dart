@@ -80,6 +80,7 @@ class FoldersVideos extends StatelessWidget {
                             builder: (context, snapshot) {
                               if (snapshot.hasData) {
                                 // return Image.file(File(snapshot.data));
+
                                 return Image.memory(snapshot.data!);
                               } else if (snapshot.hasError)
                                 return Container(
